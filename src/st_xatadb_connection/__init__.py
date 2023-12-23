@@ -6,6 +6,7 @@ from typing import Literal, Optional, Tuple, Union, types
 import os
 from xata.api_response import ApiResponse
 
+__version__ = "0.0.1"
 
 class XataTable:
     def __init__(self,client:XataClient,table_name:str):
