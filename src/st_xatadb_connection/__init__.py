@@ -152,22 +152,11 @@ class XatadbConnection(BaseConnection[XataClient]):
         The function `query` takes a table name, a full query dictionary, a consistency level, and additional keyword
         arguments, and returns an API response.
 
+        For more information visit: https://xata.io/docs/sdk/get
+
         :param table_name: The name of the table you want to query from
         :type table_name: str
         :param full_query: The `full_query` parameter is a dictionary that contains the details of the query to be executed.
-        It can include the following keys:
-        {
-            "columns": [...],
-            "filter": {
-                ...
-            },
-            "sort": {
-                ...
-            },
-            "page": {
-                ...
-            }
-        }
         :type full_query: Optional[dict]
         :param consistency: The `consistency` parameter is an optional parameter that specifies the consistency level for
         the query. It can have two possible values: "strong" or "eventual". If set to "strong", the query will return the
@@ -205,6 +194,7 @@ class XatadbConnection(BaseConnection[XataClient]):
     def insert(self,table_name:str,record:dict,record_id:Optional[str]=None,**kwargs) -> ApiResponse:
         """
         The function inserts a record into a table with an optional record ID.
+        For more information visit: https://xata.io/docs/sdk/insert
 
         :param table_name: The name of the table where the record will be inserted
         :type table_name: str
@@ -225,6 +215,7 @@ class XatadbConnection(BaseConnection[XataClient]):
     def replace(self,table_name:str,record_id:str,record:dict,**kwargs) -> ApiResponse:
         """
         The function replaces a record in a table with a new record.
+        For more information visit: https://xata.io/docs/sdk/update
 
         :param table_name: The name of the table where the record will be replaced
         :type table_name: str
@@ -242,7 +233,7 @@ class XatadbConnection(BaseConnection[XataClient]):
     def update(self,table_name:str,record_id:str,record:dict,**kwargs) -> ApiResponse:
         """
         The function updates a record in a specified table using the provided record ID and record data.
-
+        For more information visit: https://xata.io/docs/sdk/update
         :param table_name: The name of the table where the record is located
         :type table_name: str
         :param record_id: The `record_id` parameter is a string that represents the unique identifier of the record you want
@@ -258,6 +249,7 @@ class XatadbConnection(BaseConnection[XataClient]):
     def delete(self,table_name:str,record_id:str,**kwargs) -> ApiResponse:
         """
         The function deletes a record from a specified table using the provided record ID.
+        For more information visit: https://xata.io/docs/sdk/delete
 
         :param table_name: The name of the table from which you want to delete a record
         :type table_name: str
@@ -272,6 +264,7 @@ class XatadbConnection(BaseConnection[XataClient]):
         """
         The function takes a search query and additional keyword arguments, and returns the result of searching for a branch
         using the query.
+        For more information visit: https://xata.io/docs/sdk/search
 
         :param search_query: A dictionary containing the search query parameters. The specific keys and values in the
         dictionary will depend on the API you are using for the search
@@ -283,6 +276,7 @@ class XatadbConnection(BaseConnection[XataClient]):
     def search_on_table(self,table_name:str,search_query:dict,**kwargs) -> ApiResponse:
         """
         The function searches for a specific query in a table and returns the results.
+        For more information visit: https://xata.io/docs/sdk/search
 
         :param table_name: The name of the table where you want to perform the search
         :type table_name: str
@@ -292,15 +286,77 @@ class XatadbConnection(BaseConnection[XataClient]):
         :type search_query: dict
         :return: an ApiResponse.
         """
-        return self.client.data().search_branch(f'{table_name}',search_query,**kwargs)
+        return self.client.data().search_table(f'{table_name}',search_query,**kwargs)
 
+    def vector_search(self,table_name:str,search_query:dict,**kwargs) -> ApiResponse:
+        """
+        The function performs a vector search on a specified table using a search query and additional arguments.
+        For more information visit: https://xata.io/docs/sdk/vector-search
 
+        :param table_name: The name of the table in which you want to perform the vector search
+        :type table_name: str
+        :param search_query: The `search_query` parameter is a dictionary that contains the search query for vector search.
+        It typically includes the following key-value pairs:
+        :type search_query: dict
+        :return: an ApiResponse.
+        """
+        return self.client.data().vector_search(f'{table_name}',search_query,**kwargs)
 
+    def aggregate(self,table_name:str,aggregate_query:dict,**kwargs) -> ApiResponse:
+        """
+        The function aggregates data from a specified table using a given query and returns the result.
 
+        For more information visit: https://xata.io/docs/sdk/aggregate
 
+        :param table_name: The name of the table or collection in the database that you want to perform the aggregation on
+        :type table_name: str
+        :param aggregate_query: The `aggregate_query` parameter is a dictionary that specifies the aggregation operations to
+        be performed on the data in the specified table.
+        :type aggregate_query: dict
+        :return: an ApiResponse.
+        """
+        return self.client.data().aggregate(f'{table_name}',aggregate_query,**kwargs)
 
+    def summarize(self,table_name:str,summarize_query:dict,**kwargs) -> ApiResponse:
+        """
+        The function takes a table name and a summarize query as input and returns the summarized data from the table.
 
+        For more information visit: https://xata.io/docs/sdk/summarize
 
+        :param table_name: The name of the table that you want to summarize
+        :type table_name: str
+        :param summarize_query: The `summarize_query` parameter is a dictionary that contains the query parameters for the
+        summarize operation. It typically includes information such as the columns to group by, the columns to aggregate,
+        and any filters to apply to the data
+        :type summarize_query: dict
+        :return: an ApiResponse.
+        """
+        return self.client.data().summarize(f'{table_name}',summarize_query,**kwargs)
+
+    def transaction(self,transaction_query:dict,**kwargs) -> ApiResponse:
+        """
+        The function `transaction` takes a transaction query and optional keyword arguments, and returns an `ApiResponse`
+        object.
+
+        For more information visit: https://xata.io/docs/sdk/transaction
+
+        :param transaction_query: The transaction_query parameter is a dictionary that contains the details of the
+        transaction. It may include information such as the transaction type, amount, date, and any other relevant details
+        :type transaction_query: dict
+        :return: an ApiResponse object.
+        """
+        return self.client.records().transaction(transaction_query,**kwargs)
+
+    def sql_query(self,query:str,**kwargs) -> ApiResponse:
+        """
+        The function `sql_query` takes a SQL query string and optional keyword arguments, and returns an `ApiResponse`
+        object.
+
+        :param query: The `query` parameter is a string that represents the SQL query you want to execute
+        :type query: str
+        :return: an ApiResponse object.
+        """
+        return self.client.sql().query(query,**kwargs)
 
 
 
