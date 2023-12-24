@@ -1,10 +1,11 @@
-from streamlit.connections import BaseConnection
-from xata.client import XataClient
-from io import BytesIO
+import os
 from pathlib import Path
 from typing import Literal, Optional, Tuple, Union, types
-import os
+
+from streamlit.connections import BaseConnection
+from xata.client import XataClient
 from xata.api_response import ApiResponse
+
 
 __version__ = "0.0.1"
 
@@ -116,11 +117,73 @@ class XataTable:
         """
         return self.client.records().delete(f'{self.table_name}',record_id,**kwargs)
 
+    def search_on_table(self,search_query:dict,**kwargs) -> ApiResponse:
+        """
+        The function searches for a specific query in a table and returns the results.
+        For more information visit: https://xata.io/docs/sdk/search
+
+        :param table_name: The name of the table where you want to perform the search
+        :type table_name: str
+        :param search_query: The `search_query` parameter is a dictionary that contains the search criteria for the table.
+        It can include one or more key-value pairs, where the keys represent the column names in the table and the values
+        represent the search values for those columns
+        :type search_query: dict
+        :return: an ApiResponse.
+        """
+        return self.client.data().search_table(f'{self.table_name}',search_query,**kwargs)
+
+    def vector_search(self,search_query:dict,**kwargs) -> ApiResponse:
+        """
+        The function performs a vector search on a specified table using a search query and additional arguments.
+        For more information visit: https://xata.io/docs/sdk/vector-search
+
+        :param table_name: The name of the table in which you want to perform the vector search
+        :type table_name: str
+        :param search_query: The `search_query` parameter is a dictionary that contains the search query for vector search.
+        It typically includes the following key-value pairs:
+        :type search_query: dict
+        :return: an ApiResponse.
+        """
+        return self.client.data().vector_search(f'{self.table_name}',search_query,**kwargs)
+
+    def aggregate(self,table_name:str,aggregate_query:dict,**kwargs) -> ApiResponse:
+        """
+        The function aggregates data from a specified table using a given query and returns the result.
+
+        For more information visit: https://xata.io/docs/sdk/aggregate
+
+        :param table_name: The name of the table or collection in the database that you want to perform the aggregation on
+        :type table_name: str
+        :param aggregate_query: The `aggregate_query` parameter is a dictionary that specifies the aggregation operations to
+        be performed on the data in the specified table.
+        :type aggregate_query: dict
+        :return: an ApiResponse.
+        """
+        return self.client.data().aggregate(f'{table_name}',aggregate_query,**kwargs)
+
+    def summarize(self,summarize_query:dict,**kwargs) -> ApiResponse:
+        """
+        The function takes a table name and a summarize query as input and returns the summarized data from the table.
+
+        For more information visit: https://xata.io/docs/sdk/summarize
+
+        :param table_name: The name of the table that you want to summarize
+        :type table_name: str
+        :param summarize_query: The `summarize_query` parameter is a dictionary that contains the query parameters for the
+        summarize operation. It typically includes information such as the columns to group by, the columns to aggregate,
+        and any filters to apply to the data
+        :type summarize_query: dict
+        :return: an ApiResponse.
+        """
+        return self.client.data().summarize(f'{self.table_name}',summarize_query,**kwargs)
+
+
+
 
 
 class XatadbConnection(BaseConnection[XataClient]):
 
-    def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None, **kwargs) -> None:
+    def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None,table_names:Optional[list]=None,**kwargs) -> None:
         """
         The `_connect` function establishes a connection to a database using an API key and a database URL.
 
@@ -147,6 +210,10 @@ class XatadbConnection(BaseConnection[XataClient]):
             else:
                 raise ConnectionRefusedError("No DB URL found. Please set the XATA_DB_URL environment variable or add it to the secrets manager.")
         self.client = XataClient(api_key=api_key,db_url=db_url,**kwargs)
+
+        if table_names is not None:
+            for table_name in table_names:
+                setattr(self,table_name,XataTable(self.client,table_name))
 
     def query(self,table_name:str,full_query:Optional[dict]={'columns': ['*']},consistency:Optional[Literal['strong','eventual']]=None,**kwargs) -> ApiResponse:
         """
@@ -359,7 +426,34 @@ class XatadbConnection(BaseConnection[XataClient]):
         """
         return self.client.sql().query(query,**kwargs)
 
+    def askai(self,reference_table:str,question:str, rules: Optional[list]=[], options: Optional[dict]={},**kwargs)->ApiResponse:
+        """
+        The function `askAI` sends a question to an AI model using a reference table, rules, and options.
+
+        :param reference_table: The reference_table parameter is a string that specifies the table or dataset from which the
+        AI should retrieve information to answer the question
+        :type reference_table: str
+        :param question: The "question" parameter is a string that represents the question you want to ask the AI
+        :type question: str
+        :param rules: The `rules` parameter is an optional list that contains any additional rules or constraints that you
+        want to apply to the question. These rules can be used to filter or manipulate the data before returning the answer
+        :type rules: Optional[list]
+        :param options: The "options" parameter is a dictionary that allows you to provide additional options for the AI to
+        consider when answering the question. These options can include things like fuzziness, searchType, boosters, and any other
+        relevant information that can help the AI provide a more accurate response
+        :type options: Optional[dict]
+        """
+        self.client.data().ask(reference_table,question,rules,options,**kwargs)
+
+    def askai_follow_up(self,reference_table:str,question:str,chatsessionid: str,**kwargs)->ApiResponse:
+        return self.client.data().ask_follow_up(reference_table,chatsessionid,question,**kwargs)
 
 
 
+    def __call__(self) -> XataClient:
+        """
+        The function returns the XataClient object.
+        :return: The method is returning an instance of the XataClient class.
+        """
+        return self.client
 
