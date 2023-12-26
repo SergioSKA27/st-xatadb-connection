@@ -1,3 +1,4 @@
+from __future__ import annotations
 import os
 from pathlib import Path
 from typing import Literal, Optional, Tuple, Union, types
@@ -11,10 +12,18 @@ __version__ = "0.0.1"
 
 class XataTable:
     def __init__(self,client:XataClient,table_name:str):
+        """
+        The `__init__` method initializes a new `XataTable` object.
+
+        :param client: The `XataClient` object that represents the connection to the database.
+        :type client: XataClient
+        :param table_name: The name of the table that you want to interact with.
+        :type table_name: str
+        """
         self.client = client
         self.table_name = table_name
 
-    def query(self,full_query:Optional[dict]={'columns': ['*']},consistency:Optional[Literal['strong','eventual']]=None,**kwargs) -> ApiResponse:
+    def query(self,full_query:Optional[dict]=None,consistency:Optional[Literal['strong','eventual']]=None,**kwargs) -> ApiResponse:
         """
         The function `query` takes in a full query and consistency level as optional parameters, and returns the result of
         executing the query using the specified consistency level.
@@ -24,12 +33,16 @@ class XataTable:
         result. The value of 'columns' can be a list of column names or '*' to
         :type full_query: Optional[dict]
         :param consistency: The `consistency` parameter is an optional parameter that specifies the consistency level for the
-        query. It can have two possible values: "strong" or "eventual"
+        query. It can have two possible values: "strong" or "eventual" by default it is set to "strong".
         :type consistency: Optional[Literal['strong','eventual']]
         :return: an ApiResponse.
         """
-        if consistency is not None:
+        if consistency is not None and full_query is not None:
             full_query['consistency'] = consistency
+        elif consistency is not None and full_query is None:
+            full_query = {'consistency':consistency}
+        if full_query is None:
+            return self.client.data().query(f'{self.table_name}',**kwargs)
         return self.client.data().query(f'{self.table_name}',full_query,**kwargs)
 
     def get_record(self,record_id:str,**kwargs) -> ApiResponse:
@@ -182,18 +195,34 @@ class XataTable:
 
 
 class XatadbConnection(BaseConnection[XataClient]):
+    """"
+    XataDBConnection is a class that represents a connection to a Xata database.
+    It is used to connect to a Xata database and perform various operations on the database.
+    attributes:
+    - client: The `XataClient` object that represents the connection to the database.
+    - table_names: A list of table names that you want to access.
+
+    """
+
+    def __init__(self,connection_name:Optional[str]='xata',**kwargs):
+        super().__init__(connection_name,**kwargs)
+
 
     def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None,table_names:Optional[list]=None,**kwargs) -> None:
         """
         The `_connect` function establishes a connection to a database using an API key and a database URL.
 
-        :param api_key: The `api_key` parameter is used to authenticate and authorize access to the Xata API. It is a string
-        that represents a unique identifier for your account or application
+        :param api_key: The API key used to authenticate and authorize access to the Xata API.
+        It is a string that represents a unique identifier for your account or application.
+        If not provided, it will be retrieved from the `XATA_API_KEY` environment variable or the secrets manager.
         :type api_key: Optional[str]
-        :param db_url: The `db_url` parameter is used to specify the URL of the database that you want to connect to. It is
-        a required parameter and must be provided either as an argument to the `_connect` method or through the
-        `XATA_DB_URL` environment variable or the secrets manager
+        :param db_url: The URL of the database that you want to connect to.
+        It is a required parameter and must be provided either as an argument to the `_connect` method or through the `XATA_DB_URL` environment variable or the secrets manager.
         :type db_url: Optional[str]
+        :param table_names: A list of table names that you want to access.
+        If provided, the `_connect` function will create a `XataTable` object for each table name and assign it to a corresponding attribute in the `XataClient` object.
+        :type table_names: Optional[list]
+        :raises ConnectionRefusedError: If the API key or the database URL cannot be found.
         """
         if api_key is None:
             if "XATA_API_KEY" in self._secrets:
@@ -209,13 +238,13 @@ class XatadbConnection(BaseConnection[XataClient]):
                 db_url = os.environ.get("XATA_DB_URL")
             else:
                 raise ConnectionRefusedError("No DB URL found. Please set the XATA_DB_URL environment variable or add it to the secrets manager.")
-        self.client = XataClient(api_key=api_key,db_url=db_url,**kwargs)
+        self._client = XataClient(api_key=api_key,db_url=db_url,**kwargs)
 
         if table_names is not None:
             for table_name in table_names:
-                setattr(self,table_name,XataTable(self.client,table_name))
+                setattr(self,table_name,XataTable(self._client,table_name))
 
-    def query(self,table_name:str,full_query:Optional[dict]={'columns': ['*']},consistency:Optional[Literal['strong','eventual']]=None,**kwargs) -> ApiResponse:
+    def query(self,table_name:str,full_query:Optional[dict]=None,consistency:Optional[Literal['strong','eventual']]=None,**kwargs) -> ApiResponse:
         """
         The function `query` takes a table name, a full query dictionary, a consistency level, and additional keyword
         arguments, and returns an API response.
@@ -232,9 +261,16 @@ class XatadbConnection(BaseConnection[XataClient]):
         :type consistency: Optional[Literal['strong','eventual']]
         :return: an ApiResponse.
         """
-        if consistency is not None:
+        if consistency is not None and full_query is not None:
             full_query['consistency'] = consistency
-        return self.client.data().query(f'{table_name}',full_query,**kwargs)
+        if full_query is None:
+            return self._client.data().query(f'{table_name}',**kwargs)
+
+        response = self._client.data().query(f'{table_name}',full_query,**kwargs)
+        if not response.is_success():
+            raise Exception(response.status_code)
+
+        return self._client.data().query(f'{table_name}',full_query,**kwargs)
 
     def get_record(self,table_name:str,record_id:str,**kwargs) -> ApiResponse:
         """
@@ -401,7 +437,7 @@ class XatadbConnection(BaseConnection[XataClient]):
         """
         return self.client.data().summarize(f'{table_name}',summarize_query,**kwargs)
 
-    def transaction(self,transaction_query:dict,**kwargs) -> ApiResponse:
+    def transaction(self,payload:dict,**kwargs) -> ApiResponse:
         """
         The function `transaction` takes a transaction query and optional keyword arguments, and returns an `ApiResponse`
         object.
@@ -413,7 +449,7 @@ class XatadbConnection(BaseConnection[XataClient]):
         :type transaction_query: dict
         :return: an ApiResponse object.
         """
-        return self.client.records().transaction(transaction_query,**kwargs)
+        return self.client.records().transaction(payload,**kwargs)
 
     def sql_query(self,query:str,**kwargs) -> ApiResponse:
         """
@@ -457,3 +493,6 @@ class XatadbConnection(BaseConnection[XataClient]):
         """
         return self.client
 
+
+
+XatadbConnection()
