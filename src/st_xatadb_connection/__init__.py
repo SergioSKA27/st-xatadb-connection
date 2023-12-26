@@ -1,17 +1,23 @@
 from __future__ import annotations
 import os
+import re
 from pathlib import Path
 from typing import Literal, Optional, Tuple, Union, types
 
+
 from streamlit.connections import BaseConnection
 from xata.client import XataClient
+from xata.helpers import to_rfc339
 from xata.api_response import ApiResponse
+from pandas import DataFrame
+from datetime import datetime, timezone
 
+#from streamlit.runtime.caching import cache_data
 
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 
 class XataTable:
-    def __init__(self,client:XataClient,table_name:str):
+    def __init__(self,client:XataClient,table_name:str,fixdates:Optional[bool]=False) -> None:
         """
         The `__init__` method initializes a new `XataTable` object.
 
@@ -20,8 +26,10 @@ class XataTable:
         :param table_name: The name of the table that you want to interact with.
         :type table_name: str
         """
-        self.client = client
+        self._fixdates = fixdates
+        self._client = client
         self.table_name = table_name
+        self.schema = DataFrame(self._client.table().get_schema(self.table_name)['columns'])
 
     def query(self,full_query:Optional[dict]=None,consistency:Optional[Literal['strong','eventual']]=None,**kwargs) -> ApiResponse:
         """
@@ -41,9 +49,17 @@ class XataTable:
             full_query['consistency'] = consistency
         elif consistency is not None and full_query is None:
             full_query = {'consistency':consistency}
+
         if full_query is None:
-            return self.client.data().query(f'{self.table_name}',**kwargs)
-        return self.client.data().query(f'{self.table_name}',full_query,**kwargs)
+            response = self._client.data().query(f'{self.table_name}',**kwargs)
+            if not response.is_success():
+                raise Exception(response.status_code)
+            return response
+
+        response = self._client.data().query(f'{self.table_name}',full_query,**kwargs)
+        if not response.is_success():
+            raise Exception(response.status_code)
+        return self._client.data().query(f'{self.table_name}',full_query,**kwargs)
 
     def get_record(self,record_id:str,**kwargs) -> ApiResponse:
         """
@@ -54,7 +70,7 @@ class XataTable:
         :type record_id: str
         :return: an ApiResponse object.
         """
-        return self.client.records().get(f'{self.table_name}',record_id,**kwargs)
+        return self._client.records().get(f'{self.table_name}',record_id,**kwargs)
 
     def get_many_records(self,**kwargs) -> ApiResponse:
         """
@@ -62,7 +78,7 @@ class XataTable:
         `ApiResponse` object.
         :return: an ApiResponse object.
         """
-        return self.client.data().query(f'{self.table_name}',**kwargs)
+        return self._client.data().query(f'{self.table_name}',**kwargs)
 
     def insert(self,record:dict,record_id:Optional[str]=None,**kwargs) -> ApiResponse:
         """
@@ -80,9 +96,9 @@ class XataTable:
         :return: The code is returning an ApiResponse.
         """
         if record_id is not None:
-            return self.client.records().insert_with_id(f'{self.table_name}',record_id,record,**kwargs)
+            return self._client.records().insert_with_id(f'{self.table_name}',record_id,record,**kwargs)
 
-        return self.client.records().insert(f'{self.table_name}',record,**kwargs)
+        return self._client.records().insert(f'{self.table_name}',record,**kwargs)
 
     def replace(self,record_id:str,record:dict,**kwargs) -> ApiResponse:
         """
@@ -99,7 +115,7 @@ class XataTable:
         :type record: dict
         :return: an ApiResponse.
         """
-        return self.client.records().upsert(f'{self.table_name}',record_id,record,**kwargs)
+        return self._client.records().upsert(f'{self.table_name}',record_id,record,**kwargs)
 
     def update(self,record_id:str,record:dict,**kwargs) -> ApiResponse:
         """
@@ -115,7 +131,7 @@ class XataTable:
         :type record: dict
         :return: an ApiResponse.
         """
-        return self.client.records().update(f'{self.table_name}',record_id,record,**kwargs)
+        return self._client.records().update(f'{self.table_name}',record_id,record,**kwargs)
 
     def delete(self,record_id:str,**kwargs) -> ApiResponse:
         """
@@ -128,7 +144,7 @@ class XataTable:
         :type record_id: str
         :return: an ApiResponse.
         """
-        return self.client.records().delete(f'{self.table_name}',record_id,**kwargs)
+        return self._client.records().delete(f'{self.table_name}',record_id,**kwargs)
 
     def search_on_table(self,search_query:dict,**kwargs) -> ApiResponse:
         """
@@ -143,7 +159,7 @@ class XataTable:
         :type search_query: dict
         :return: an ApiResponse.
         """
-        return self.client.data().search_table(f'{self.table_name}',search_query,**kwargs)
+        return self._client.data().search_table(f'{self.table_name}',search_query,**kwargs)
 
     def vector_search(self,search_query:dict,**kwargs) -> ApiResponse:
         """
@@ -157,7 +173,7 @@ class XataTable:
         :type search_query: dict
         :return: an ApiResponse.
         """
-        return self.client.data().vector_search(f'{self.table_name}',search_query,**kwargs)
+        return self._client.data().vector_search(f'{self.table_name}',search_query,**kwargs)
 
     def aggregate(self,table_name:str,aggregate_query:dict,**kwargs) -> ApiResponse:
         """
@@ -172,7 +188,7 @@ class XataTable:
         :type aggregate_query: dict
         :return: an ApiResponse.
         """
-        return self.client.data().aggregate(f'{table_name}',aggregate_query,**kwargs)
+        return self._client.data().aggregate(f'{table_name}',aggregate_query,**kwargs)
 
     def summarize(self,summarize_query:dict,**kwargs) -> ApiResponse:
         """
@@ -188,13 +204,23 @@ class XataTable:
         :type summarize_query: dict
         :return: an ApiResponse.
         """
-        return self.client.data().summarize(f'{self.table_name}',summarize_query,**kwargs)
+        return self._client.data().summarize(f'{self.table_name}',summarize_query,**kwargs)
+
+    def _fix_dates(self,payload:dict,time_zone:Optional[timezone]=timezone.utc) -> dict:
+        sch = self.schema
+        sch = sch[sch['type'].isin(['date','datetime','string'])]
+
+        for col in sch['name']:
+            if re.match(r'^\d{4}-\d{2}-\d{2}$',payload[col]):
+                date_without_time = datetime.strptime(payload[col], "%Y-%m-%d")
+            elif re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$',payload[col]):
+                date_without_time = datetime.strptime(payload[col], "%Y-%m-%d %H:%M:%S")
+
+            payload[col] = to_rfc339(date_without_time,time_zone)
 
 
 
-
-
-class XatadbConnection(BaseConnection[XataClient]):
+class XataConnection(BaseConnection[XataClient]):
     """"
     XataDBConnection is a class that represents a connection to a Xata database.
     It is used to connect to a Xata database and perform various operations on the database.
@@ -205,6 +231,13 @@ class XatadbConnection(BaseConnection[XataClient]):
     """
 
     def __init__(self,connection_name:Optional[str]='xata',**kwargs):
+        """
+        The above function is a constructor that initializes an object with an optional connection name parameter.
+
+        :param connection_name: The connection_name parameter is an optional string that specifies the name of the
+        connection. If no value is provided, it defaults to 'xata', defaults to xata
+        :type connection_name: Optional[str] (optional)
+        """
         super().__init__(connection_name,**kwargs)
 
 
@@ -236,11 +269,15 @@ class XatadbConnection(BaseConnection[XataClient]):
                 db_url = self._secrets["XATA_DB_URL"]
             elif "XATA_DB_URL" in os.environ:
                 db_url = os.environ.get("XATA_DB_URL")
-            else:
-                raise ConnectionRefusedError("No DB URL found. Please set the XATA_DB_URL environment variable or add it to the secrets manager.")
-        self._client = XataClient(api_key=api_key,db_url=db_url,**kwargs)
 
-        if table_names is not None:
+        if db_url is None:
+        #
+            self._client = XataClient(api_key=api_key,**kwargs)
+        else:
+            self._client = XataClient(api_key=api_key,db_url=db_url,**kwargs)
+
+        if table_names is not None and db_url is not None:
+            self._table_names = table_names
             for table_name in table_names:
                 setattr(self,table_name,XataTable(self._client,table_name))
 
@@ -261,6 +298,7 @@ class XatadbConnection(BaseConnection[XataClient]):
         :type consistency: Optional[Literal['strong','eventual']]
         :return: an ApiResponse.
         """
+
         if consistency is not None and full_query is not None:
             full_query['consistency'] = consistency
         if full_query is None:
@@ -485,14 +523,9 @@ class XatadbConnection(BaseConnection[XataClient]):
         return self.client.data().ask_follow_up(reference_table,chatsessionid,question,**kwargs)
 
 
-
     def __call__(self) -> XataClient:
         """
         The function returns the XataClient object.
         :return: The method is returning an instance of the XataClient class.
         """
         return self.client
-
-
-
-XatadbConnection()

@@ -1,12 +1,17 @@
 import streamlit as st
-from src import st_xatadb_connection as xata
+from src.st_xatadb_connection import XataConnection
+from streamlit_profiler import Profiler
+import pandas as pd
+
+if 'xata' not in st.session_state:
+    st.session_state.xata =  st.connection('xata',type=XataConnection,table_names=['Alumno'])
 
 
-con = st.connection('xata',type=xata.XatadbConnection,table_names=['Alumno'])
 
 
-st.write(con.query('Alumno'))
+with Profiler():
+    st.write(st.session_state.xata.query('Alumno'))
 
-st.write(con.Alumno.query())
+    st.write(st.session_state.xata.Alumno.query())
 
-con()
+    st.write(pd.DataFrame(st.session_state.xata.Alumno.schema))
