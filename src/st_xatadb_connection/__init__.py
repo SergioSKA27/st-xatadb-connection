@@ -53,15 +53,18 @@ class XataTable:
         if full_query is None:
             response = self._client.data().query(f'{self.table_name}',**kwargs)
             if not response.is_success():
-                raise Exception(response.status_code)
+                raise Exception(response.status_code,response.server_message())
             return response
 
         response = self._client.data().query(f'{self.table_name}',full_query,**kwargs)
         if not response.is_success():
-            raise Exception(response.status_code)
+            raise Exception(response.status_code,response.server_message())
         return self._client.data().query(f'{self.table_name}',full_query,**kwargs)
 
-    def get_record(self,record_id:str,**kwargs) -> ApiResponse:
+    def get_record(self,record_id:str,
+                db_name: Optional[str]=None,
+                branch_name: Optional[str]=None,
+                columns: Optional[list]=None) -> ApiResponse:
         """
         The function `get_record` retrieves a record from a table using the provided record ID.
 
@@ -70,15 +73,11 @@ class XataTable:
         :type record_id: str
         :return: an ApiResponse object.
         """
-        return self._client.records().get(f'{self.table_name}',record_id,**kwargs)
+        response = self._client.records().get(f'{self.table_name}',record_id,db_name,branch_name,columns)
+        if not response.is_success():
+            raise Exception(response.status_code,response.server_message())
+        return response
 
-    def get_many_records(self,**kwargs) -> ApiResponse:
-        """
-        The function `get_many_records` queries a data table using the provided arguments and returns the response as an
-        `ApiResponse` object.
-        :return: an ApiResponse object.
-        """
-        return self._client.data().query(f'{self.table_name}',**kwargs)
 
     def insert(self,record:dict,record_id:Optional[str]=None,**kwargs) -> ApiResponse:
         """
@@ -96,9 +95,15 @@ class XataTable:
         :return: The code is returning an ApiResponse.
         """
         if record_id is not None:
-            return self._client.records().insert_with_id(f'{self.table_name}',record_id,record,**kwargs)
+            response = self._client.records().insert_with_id(f'{self.table_name}',record_id,record,**kwargs)
+            if not response.is_success():
+                raise Exception(response.status_code,response.server_message())
+            return response
 
-        return self._client.records().insert(f'{self.table_name}',record,**kwargs)
+        response = self._client.records().insert(f'{self.table_name}',record,**kwargs)
+        if not response.is_success():
+            raise Exception(response.status_code,response.server_message())
+        return response
 
     def replace(self,record_id:str,record:dict,**kwargs) -> ApiResponse:
         """
