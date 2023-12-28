@@ -216,6 +216,8 @@ class XataTable:
         sch = sch[sch['type'].isin(['date','datetime','string'])]
 
         for col in sch['name']:
+            if isinstance(payload[col],datetime):
+                payload[col] = to_rfc339(payload[col],time_zone)
             if re.match(r'^\d{4}-\d{2}-\d{2}$',payload[col]):
                 date_without_time = datetime.strptime(payload[col], "%Y-%m-%d")
             elif re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$',payload[col]):
@@ -276,7 +278,6 @@ class XataConnection(BaseConnection[XataClient]):
                 db_url = os.environ.get("XATA_DB_URL")
 
         if db_url is None:
-        #
             self._client = XataClient(api_key=api_key,**kwargs)
         else:
             self._client = XataClient(api_key=api_key,db_url=db_url,**kwargs)
