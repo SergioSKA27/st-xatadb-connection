@@ -258,17 +258,33 @@ class XataConnection(BaseConnection[XataClient]):
         """
         The `_connect` function establishes a connection to a database using an API key and a database URL.
 
-        :param api_key: The API key used to authenticate and authorize access to the Xata API.
-        It is a string that represents a unique identifier for your account or application.
-        If not provided, it will be retrieved from the `XATA_API_KEY` environment variable or the secrets manager.
-        :type api_key: Optional[str]
-        :param db_url: The URL of the database that you want to connect to.
-        It is a required parameter and must be provided either as an argument to the `_connect` method or through the `XATA_DB_URL` environment variable or the secrets manager.
-        :type db_url: Optional[str]
-        :param table_names: A list of table names that you want to access.
-        If provided, the `_connect` function will create a `XataTable` object for each table name and assign it to a corresponding attribute in the `XataClient` object.
-        :type table_names: Optional[list]
-        :raises ConnectionRefusedError: If the API key or the database URL cannot be found.
+        Parameters:
+
+            api_key: (Optional) The API key used to authenticate and authorize access to the Xata API. It is a string representing a unique identifier for your account or application.
+                If not provided, it will be retrieved from the `XATA_API_KEY` environment variable or the secrets manager.
+            db_url: (Optional) The URL of the database that you want to connect to.
+                It is a required parameter and must be provided either as an argument to the `_connect` method or through the `XATA_DB_URL` environment variable or the secrets manager.
+                If no db_url provided, you'll need to specify the database name and region on each query.
+            table_names: (Optional) A list of table names that you want to access.
+                If provided, the `_connect` function will create a `XataTable` object for each table name and assign it to a corresponding attribute in the `XataClient` object.
+
+        Raises:
+
+            ConnectionRefusedError: If the API key or the database URL cannot be found.
+
+        Additional Information:
+
+            -The `_connect` function is used internally by the `XataConnection` class to establish a connection to a Xata database.
+
+            -The fixdates parameter is used to specify whether or not to fix the date and time values in the database queries.
+
+            -The return_metadata parameter is used to specify whether or not to return the metadata along with the data in the database responses.
+
+            -The returntype parameter is used to specify the return type of the database responses.
+
+            -The table_names parameter is used to create `XataTable` objects for the specified table names and assign them to corresponding attributes in the `XataClient` object. This allows you to access the tables in the database using the XataTable objects.
+
+
         """
 
         self._fixdates = fixdates
