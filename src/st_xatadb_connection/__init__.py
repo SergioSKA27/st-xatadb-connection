@@ -9,12 +9,14 @@ from streamlit.connections import BaseConnection
 from xata.client import XataClient
 from xata.helpers import to_rfc339
 from xata.api_response import ApiResponse
+from xata.errors import XataServerError
 from pandas import DataFrame
 from datetime import datetime, timezone
 
 #from streamlit.runtime.caching import cache_data
 
 __version__ = "0.0.2"
+
 
 class XataTable:
     def __init__(self,client:XataClient,table_name:str,fixdates:Optional[bool]=False) -> None:
@@ -235,6 +237,8 @@ class XataConnection(BaseConnection[XataClient]):
     - client: The `XataClient` object that represents the connection to the database.
     - table_names: A list of table names that you want to access.
 
+    for more information visit: https://xata-py.readthedocs.io/en/latest/api.html#
+
     """
 
     def __init__(self,connection_name:Optional[str]='xata',**kwargs):
@@ -284,12 +288,46 @@ class XataConnection(BaseConnection[XataClient]):
 
             -The table_names parameter is used to create `XataTable` objects for the specified table names and assign them to corresponding attributes in the `XataClient` object. This allows you to access the tables in the database using the XataTable objects.
 
+            -The kwargs parameter is used to pass additional keyword arguments to the `XataClient` constructor.
 
         """
 
         self._fixdates = fixdates
         self._return_metadata = return_metadata
         self._returntype = returntype
+        self.client_kwargs = kwargs
+        self._table_names = None
+
+        try:
+            self._call_client(api_key=api_key,db_url=db_url,**kwargs) # Verify that the connection is working
+        except Exception as err:
+            raise ConnectionRefusedError("Could not connect to the database. Please check your credentials and try again.") from err
+
+        if table_names is not None and db_url is not None:
+            #Now you need to use the database name once and automatically the base url will be set
+            #the database url is necessary to get the schema of the tables so if it is not provided, the tables will not be created
+            self._table_names = table_names
+            for table_name in table_names:
+                setattr(self,table_name,XataTable(self._client,table_name))
+
+    def  _call_client(self,api_key:Optional[str]=None,db_url:Optional[str]=None,**kwargs) -> XataClient:
+        """
+        The `_call_client` function is used to create an instance of the `XataClient` class with the provided API key and
+        database URL, or retrieve them from environment variables or secrets manager if not provided.
+
+        :param api_key: The `api_key` parameter is an optional string that represents the API key used for authentication with
+        the Xata API. If not provided, the function will attempt to retrieve the API key from the `_secrets` dictionary or the
+        secrets manager. If it is still not found, an error will be raised.
+        you need to set api_key using the `XATA_API_KEY` environment variable.
+         :type api_key: Optional[str]
+
+        :param db_url: The `db_url` parameter is used to specify the URL of the Xata database. If it is not provided, the code
+        will try to retrieve it from the secrets manager or the environment variables. If it is still not found, an error will
+        be raised. you need to set db_url using the `XATA_DB_URL` environment variable.
+        :type db_url: Optional[str]
+
+        :return: an instance of the `XataClient` class.
+        """
 
         if api_key is None:
             if "XATA_API_KEY" in self._secrets:
@@ -298,6 +336,8 @@ class XataConnection(BaseConnection[XataClient]):
                 api_key = os.environ.get("XATA_API_KEY")
             else:
                 raise ConnectionRefusedError("No API key found. Please set the XATA_API_KEY environment variable or add it to the secrets manager.")
+        else:
+            os.environ["XATA_API_KEY"] = api_key
 
         if db_url is None:
             if "XATA_DB_URL" in self._secrets:
@@ -307,52 +347,63 @@ class XataConnection(BaseConnection[XataClient]):
                 db_url = os.environ.get("XATA_DB_URL")
             elif 'db_name' in kwargs:
                 try:
-                    db_url  = XataClient(db_name=kwargs['db_name']).databases().get_base_url()
+                    db_url  = XataClient(db_name=kwargs['db_name'],api_key=api_key).databases().get_base_url()
                 except Exception as err:
                     raise ConnectionRefusedError("No database URL found. Please set the XATA_DB_URL environment variable or add it to the secrets manager.") from err
+        else:
+            os.environ["XATA_DB_URL"] = db_url
 
         if db_url is None:
-            self._client = XataClient(api_key=api_key,**kwargs)
+            return XataClient(api_key=api_key,**kwargs)
         else:
-            self._client = XataClient(api_key=api_key,db_url=db_url,**kwargs)
+            return XataClient(api_key=api_key,db_url=db_url,**kwargs)
 
-        if table_names is not None and db_url is not None:
-            #Now you need to use the database name once and automatically the base url will be set
-            #the database url is necessary to get the schema of the tables so if it is not provided, the tables will not be created
-            self._table_names = table_names
-            for table_name in table_names:
-                setattr(self,table_name,XataTable(self._client,table_name))
 
     def query(self,table_name:str,
             full_query:Optional[dict]=None,
             consistency:Optional[Literal['strong','eventual']]=None,
             **kwargs) -> ApiResponse:
+
         """
-        The function `query` takes a table name, a full query dictionary, a consistency level, and additional keyword
-        arguments, and returns an API response.
+        This function queries a table in a database using the provided parameters and returns the response.
 
-        For more information visit: https://xata.io/docs/sdk/get
-
-        :param table_name: The name of the table you want to query from
+        :param table_name: The name of the table in the database that you want to query
         :type table_name: str
-        :param full_query: The `full_query` parameter is a dictionary that contains the details of the query to be executed.
+
+        :param full_query: The `full_query` parameter is an optional dictionary that contains all the query parameters
+        that you want to include in the request. These parameters can be used to customize the query behavior, such as
+        setting the consistency level or specifying filters, select especific columns, sort, etc.
         :type full_query: Optional[dict]
-        :param consistency: The `consistency` parameter is an optional parameter that specifies the consistency level for the query. It can have two possible values: "strong" or "eventual". If set to "strong", the query will return the
-        most up-to-date data, but it may have a higher latency.
+
+        :param consistency: The `consistency` parameter is used to specify the consistency level for the query. It can have
+        two possible values: 'strong' or 'eventual'.
         :type consistency: Optional[Literal['strong','eventual']]
-        :return: an ApiResponse.
+
+        :return: an instance of the `ApiResponse` class.
         """
 
-        if consistency is not None and full_query is not None:
-            full_query['consistency'] = consistency
+
+        client = self._call_client(**self.client_kwargs)
+
+
+        if consistency is not None:
+            if full_query is None:
+                full_query = {'consistency':consistency}
+            else:
+                full_query['consistency'] = consistency
+
         if full_query is None:
-            return self._client.data().query(f'{table_name}',**kwargs)
+            response = client.data().query(f'{table_name}',**kwargs)
 
-        response = self._client.data().query(f'{table_name}',full_query,**kwargs)
-        if not response.is_success():
-            raise Exception(response.status_code)
+            if not response.is_success():
+                raise XataServerError(response.status_code,response.server_message())
+        else:
+            response = client.data().query(f'{table_name}',full_query,**kwargs)
 
-        return self._client.data().query(f'{table_name}',full_query,**kwargs)
+            if not response.is_success():
+                raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def get_record(self,table_name:str,record_id:str,**kwargs) -> ApiResponse:
         """
@@ -360,211 +411,338 @@ class XataConnection(BaseConnection[XataClient]):
 
         :param table_name: The name of the table from which you want to retrieve the record
         :type table_name: str
-        :param record_id: The `record_id` parameter is a string that represents the unique identifier of a specific record
-        in a table
+
+        :param record_id: The `record_id` parameter is a string that represents the unique identifier of the record you want
+        to retrieve from the specified table
         :type record_id: str
-        :return: an ApiResponse object.
-        """
-        return self.client.records().get(f'{table_name}',record_id,**kwargs)
 
-    def get_many_records(self,table_name:str,**kwargs) -> ApiResponse:
+        :return: an instance of the `ApiResponse` class.
         """
-        The function `get_many_records` retrieves multiple records from a specified table using the provided arguments.
 
-        :param table_name: The name of the table from which you want to retrieve records
-        :type table_name: str
-        :return: an ApiResponse object.
-        """
-        return self.client.data().query(f'{table_name}',**kwargs)
+        client = self._call_client(**self.client_kwargs)
+        response = client.records().get(f'{table_name}',record_id,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def insert(self,table_name:str,record:dict,record_id:Optional[str]=None,**kwargs) -> ApiResponse:
         """
         The function inserts a record into a table with an optional record ID.
-        For more information visit: https://xata.io/docs/sdk/insert
 
         :param table_name: The name of the table where the record will be inserted
         :type table_name: str
-        :param record: The `record` parameter is a dictionary that represents the data to be inserted into the table. Each
-        key-value pair in the dictionary represents a column name and its corresponding value in the table
-        :type record: dict
-        :param record_id: The `record_id` parameter is an optional parameter that specifies the unique identifier for the
-        record. If a `record_id` is provided, the record will be inserted with that specific identifier. If `record_id` is
-        not provided, a new unique identifier will be generated for the record
-        :type record_id: Optional[str]
-        :return: The code is returning an ApiResponse.
-        """
-        if record_id is not None:
-            return self.client.records().insert_with_id(f'{table_name}',record_id,record,**kwargs)
 
-        return self.client.records().insert(f'{table_name}',record,**kwargs)
+        :param record: The `record` parameter is a dictionary that represents the data to be inserted into the table. Each
+        key-value pair in the dictionary represents a column name and its corresponding value in the record
+        :type record: dict
+
+        :param record_id: The `record_id` parameter is an optional parameter that specifies the unique identifier for the
+        record being inserted into the table. If a `record_id` is provided, the record will be inserted with that specific
+        identifier. If `record_id` is not provided, the system will generate a unique identifier for the record
+        :type record_id: Optional[str]
+
+        :return: an instance of the `ApiResponse` class.
+        """
+
+        client = self._call_client(**self.client_kwargs)
+
+        if record_id is not None:
+            response = client.records().insert_with_id(f'{table_name}',record_id,record,**kwargs)
+
+            if not response.is_success():
+                raise XataServerError(response.status_code,response.server_message())
+        else:
+            response = client.records().insert(f'{table_name}',record,**kwargs)
+
+            if not response.is_success():
+                raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def replace(self,table_name:str,record_id:str,record:dict,**kwargs) -> ApiResponse:
         """
-        The function replaces a record in a table with a new record.
-        For more information visit: https://xata.io/docs/sdk/update
+        The function replaces a record in a table with a new record using the provided record ID and record data.
 
         :param table_name: The name of the table where the record will be replaced
         :type table_name: str
-        :param record_id: The `record_id` parameter is a string that represents the unique identifier of the record you want
-        to replace in the table
+
+        :param record_id: The `record_id` parameter is a string that represents the unique identifier of the record in the
+        table
         :type record_id: str
-        :param record: The `record` parameter is a dictionary that represents the data of the record you want to replace. It
-        contains key-value pairs where the keys represent the field names of the record and the values represent the new
-        values you want to set for those fields
+
+        :param record: The `record` parameter is a dictionary that contains the data to be updated or inserted into the
+        table. It should have key-value pairs where the keys represent the column names in the table and the values
+        represent the new values for those columns
         :type record: dict
-        :return: an ApiResponse.
+
+        :return: an instance of the `ApiResponse` class.
         """
-        return self.client.records().upsert(f'{table_name}',record_id,record,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.records().upsert(f'{table_name}',record_id,record,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def update(self,table_name:str,record_id:str,record:dict,**kwargs) -> ApiResponse:
         """
         The function updates a record in a specified table using the provided record ID and record data.
-        For more information visit: https://xata.io/docs/sdk/update
+
         :param table_name: The name of the table where the record is located
         :type table_name: str
+
         :param record_id: The `record_id` parameter is a string that represents the unique identifier of the record you want
         to update in the specified table
         :type record_id: str
-        :param record: The `record` parameter is a dictionary that contains the updated values for the record. Each
-        key-value pair in the dictionary represents a field in the record and its updated value
+
+        :param record: The `record` parameter is a dictionary that contains the updated data for the record. It should have
+        key-value pairs where the keys represent the field names in the table and the values represent the updated values
+        for those fields
         :type record: dict
-        :return: an ApiResponse.
+
+        :return: an instance of the `ApiResponse` class.
         """
-        return self.client.records().update(f'{table_name}',record_id,record,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.records().update(f'{table_name}',record_id,record,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def delete(self,table_name:str,record_id:str,**kwargs) -> ApiResponse:
         """
         The function deletes a record from a specified table using the provided record ID.
-        For more information visit: https://xata.io/docs/sdk/delete
 
         :param table_name: The name of the table from which you want to delete a record
         :type table_name: str
+
         :param record_id: The `record_id` parameter is a string that represents the unique identifier of the record that you
         want to delete from the specified table
         :type record_id: str
-        :return: an ApiResponse.
+
+        :return: an instance of the `ApiResponse` class.
         """
-        return self.client.records().delete(f'{table_name}',record_id,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.records().delete(f'{table_name}',record_id,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def search(self,search_query:dict,**kwargs) -> ApiResponse:
         """
-        The function takes a search query and additional keyword arguments, and returns the result of searching for a branch
-        using the query.
-        For more information visit: https://xata.io/docs/sdk/search
+        The function searches for a specific query in a branch and returns the results.
 
-        :param search_query: A dictionary containing the search query parameters. The specific keys and values in the
-        dictionary will depend on the API you are using for the search
+        :param search_query: A dictionary containing the search query parameters
         :type search_query: dict
+
         :return: an ApiResponse object.
         """
-        return self.client.data().search_branch(search_query,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.data().search_branch(search_query,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def search_on_table(self,table_name:str,search_query:dict,**kwargs) -> ApiResponse:
         """
-        The function searches for a specific query in a table and returns the results.
-        For more information visit: https://xata.io/docs/sdk/search
+        The function searches for data in a specified table using a search query and returns the response.
 
-        :param table_name: The name of the table where you want to perform the search
+        :param table_name: The name of the table you want to search in
         :type table_name: str
+
         :param search_query: The `search_query` parameter is a dictionary that contains the search criteria for the table.
-        It can include one or more key-value pairs, where the keys represent the column names in the table and the values
-        represent the search values for those columns
+        It can include one or more key-value pairs, where the key represents the column name and the value represents the
+        search value
         :type search_query: dict
-        :return: an ApiResponse.
+
+        :return: an ApiResponse object.
         """
-        return self.client.data().search_table(f'{table_name}',search_query,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.data().search_table(f'{table_name}',search_query,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def vector_search(self,table_name:str,search_query:dict,**kwargs) -> ApiResponse:
         """
-        The function performs a vector search on a specified table using a search query and additional arguments.
-        For more information visit: https://xata.io/docs/sdk/vector-search
+        The function performs a vector search on a specified table using a search query and returns the response.
 
         :param table_name: The name of the table in which you want to perform the vector search
         :type table_name: str
+
         :param search_query: The `search_query` parameter is a dictionary that contains the search query for vector search.
-        It typically includes the following key-value pairs:
+        It typically includes the vector field name and the vector value to search for. The specific structure of the
+        dictionary may depend on the API or library you are using for vector search
         :type search_query: dict
-        :return: an ApiResponse.
+
+        :return: an ApiResponse object.
         """
-        return self.client.data().vector_search(f'{table_name}',search_query,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.data().vector_search(f'{table_name}',search_query,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def aggregate(self,table_name:str,aggregate_query:dict,**kwargs) -> ApiResponse:
         """
-        The function aggregates data from a specified table using a given query and returns the result.
+        The function aggregates data from a specified table using a given query and returns the response.
 
-        For more information visit: https://xata.io/docs/sdk/aggregate
-
-        :param table_name: The name of the table or collection in the database that you want to perform the aggregation on
+        :param table_name: The name of the table in the database that you want to perform the aggregate query on
         :type table_name: str
-        :param aggregate_query: The `aggregate_query` parameter is a dictionary that specifies the aggregation operations to
-        be performed on the data in the specified table.
+
+        :param aggregate_query: The `aggregate_query` parameter is a dictionary that contains the query for aggregation. It
+        typically includes the fields to group by and the aggregation functions to apply on those fields.
         :type aggregate_query: dict
-        :return: an ApiResponse.
+
+        :return: an ApiResponse object.
         """
-        return self.client.data().aggregate(f'{table_name}',aggregate_query,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.data().aggregate(f'{table_name}',aggregate_query,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def summarize(self,table_name:str,summarize_query:dict,**kwargs) -> ApiResponse:
         """
-        The function takes a table name and a summarize query as input and returns the summarized data from the table.
-
-        For more information visit: https://xata.io/docs/sdk/summarize
+        The function takes a table name and a summarize query to summarize the data in the
+        table, and returns the response.
 
         :param table_name: The name of the table that you want to summarize
         :type table_name: str
+
         :param summarize_query: The `summarize_query` parameter is a dictionary that contains the query parameters for the
-        summarize operation. It typically includes information such as the columns to group by, the columns to aggregate,
-        and any filters to apply to the data
+        summarize operation. It specifies how the data should be summarized, such as the columns to group by, the columns to
+        aggregate, and any filters to apply
         :type summarize_query: dict
-        :return: an ApiResponse.
+
+        :return: an ApiResponse object.
         """
-        return self.client.data().summarize(f'{table_name}',summarize_query,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.data().summarize(f'{table_name}',summarize_query,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+        return response
 
     def transaction(self,payload:dict,**kwargs) -> ApiResponse:
         """
-        The function `transaction` takes a transaction query and optional keyword arguments, and returns an `ApiResponse`
-        object.
+        The function performs a transaction using a client and returns the response, raising an exception if the response is
+        not successful.
 
-        For more information visit: https://xata.io/docs/sdk/transaction
+        :param payload: The `payload` parameter is a dictionary that contains the data needed for the transaction. It is
+        passed to the `transaction` method of the `client.records()` object
+        :type payload: dict
 
-        :param transaction_query: The transaction_query parameter is a dictionary that contains the details of the
-        transaction. It may include information such as the transaction type, amount, date, and any other relevant details
-        :type transaction_query: dict
         :return: an ApiResponse object.
         """
-        return self.client.records().transaction(payload,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.records().transaction(payload,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+        return response
 
     def sql_query(self,query:str,**kwargs) -> ApiResponse:
         """
-        The function `sql_query` takes a SQL query string and optional keyword arguments, and returns an `ApiResponse`
-        object.
+        The function executes an SQL query using a client and returns the response.
 
-        :param query: The `query` parameter is a string that represents the SQL query you want to execute
+        :param query: The `query` parameter is a string that represents the SQL query you want to execute. It can be any
+        valid SQL statement, such as SELECT, INSERT, UPDATE, DELETE, etc
         :type query: str
+
         :return: an ApiResponse object.
         """
-        return self.client.sql().query(query,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.sql().query(query,**kwargs)
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def askai(self,reference_table:str,question:str, rules: Optional[list]=[], options: Optional[dict]={},**kwargs)->ApiResponse:
         """
-        The function `askAI` sends a question to an AI model using a reference table, rules, and options.
+        The function `askai` takes in a reference table, a question, optional rules and options, and returns an API
+        response.
 
-        :param reference_table: The reference_table parameter is a string that specifies the table or dataset from which the
-        AI should retrieve information to answer the question
+        :param reference_table: The reference_table parameter is a string that represents the table or dataset that you want
+        to ask the question to. It is used to specify the context or domain in which the question is being asked
         :type reference_table: str
+
         :param question: The "question" parameter is a string that represents the question you want to ask the AI
         :type question: str
-        :param rules: The `rules` parameter is an optional list that contains any additional rules or constraints that you
-        want to apply to the question. These rules can be used to filter or manipulate the data before returning the answer
+
+        :param rules: The `rules` parameter is an optional list that allows you to specify additional rules or constraints
+        for the question being asked. These rules can be used to filter or manipulate the data before returning the response
         :type rules: Optional[list]
-        :param options: The "options" parameter is a dictionary that allows you to provide additional options for the AI to
-        consider when answering the question. These options can include things like fuzziness, searchType, boosters, and any other
-        relevant information that can help the AI provide a more accurate response
+
+        :param options: The "options" parameter is a dictionary that allows you to provide additional options for the ask
+        query. These options can include things like the number of results to return, the language to use for the query, and
+        any additional parameters specific to the ask query
         :type options: Optional[dict]
+
+        :return: an ApiResponse object.
         """
-        self.client.data().ask(reference_table,question,rules,options,**kwargs)
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.data().ask(reference_table,question,rules=rules,options=options,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def askai_follow_up(self,reference_table:str,question:str,chatsessionid: str,**kwargs)->ApiResponse:
-        return self.client.data().ask_follow_up(reference_table,chatsessionid,question,**kwargs)
+        """
+        The function `askai_follow_up` sends a follow-up question to an AI model using a reference table and a chat session
+        ID.
+
+        :param reference_table: The reference_table parameter is a string that represents the name or identifier of the
+        table or database where the reference data is stored. This table contains the information that the AI model uses to
+        generate responses
+        :type reference_table: str
+
+        :param question: The "question" parameter is a string that represents the follow-up question that you want to ask
+        the AI
+        :type question: str
+
+        :param chatsessionid: The `chatsessionid` parameter is a unique identifier for a chat session. It is used to track
+        and identify a specific chat session in the system
+        :type chatsessionid: str
+
+        :return: The function `askai_follow_up` returns an `ApiResponse` object.
+        """
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.data().ask_follow_up(reference_table,chatsessionid,question,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
 
     def __call__(self) -> XataClient:
@@ -572,4 +750,4 @@ class XataConnection(BaseConnection[XataClient]):
         The function returns the XataClient object.
         :return: The method is returning an instance of the XataClient class.
         """
-        return self.client
+        return self._call_client(**self.client_kwargs)
