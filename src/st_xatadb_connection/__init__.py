@@ -569,7 +569,7 @@ class XataConnection(BaseConnection[XataClient]):
 
             return response
 
-    def append_file(self,table_name:str,record_id:str,column_name:str,file_content:Union[str,bytes],**kwargs) -> ApiResponse:
+    def append_file_to_array(self,table_name:str,record_id:str,column_name:str,file_id: str,file_content:Union[str,bytes],**kwargs) -> ApiResponse:
             """
             Appends a file to a specific column in a record of a table.
 
@@ -577,6 +577,7 @@ class XataConnection(BaseConnection[XataClient]):
                 table_name (str): The name of the table.
                 record_id (str): The ID of the record.
                 column_name (str): The name of the column.
+                file_id (str): The ID of the file to be appended.
                 file_content (Union[str, bytes]): The content of the file to be appended.
                 **kwargs: Additional keyword arguments to be passed to the underlying API.
 
@@ -588,12 +589,39 @@ class XataConnection(BaseConnection[XataClient]):
             """
 
             client = self._call_client(**self.client_kwargs)
-            response = client.files().put_item(f'{table_name}',record_id,column_name,file_content,**kwargs)
+            response = client.files().put_item(f'{table_name}',record_id,column_name,file_id,file_content,**kwargs)
 
             if not response.is_success():
                 raise XataServerError(response.status_code,response.server_message())
 
             return response
+
+    def get_file(self,table_name:str,record_id:str,column_name:str,**kwargs) -> ApiResponse:
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.files().get(f'{table_name}',record_id,column_name,**kwargs)
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
+
+    def get_file_from_array(self,table_name:str,record_id:str,column_name:str,file_id:str,**kwargs) -> ApiResponse:
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.files().get_item(f'{table_name}',record_id,column_name,file_id,**kwargs)
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
+
+    def delete_file_from_array(self,table_name:str,record_id:str,column_name:str,file_id:str,**kwargs) -> ApiResponse:
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.files().delete_item(f'{table_name}',record_id,column_name,file_id,**kwargs)
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
 
     def _fix_dates(self,payload:dict,time_zone:Optional[timezone]=timezone.utc,table_name:str='') -> dict:
         sch = self.schema
