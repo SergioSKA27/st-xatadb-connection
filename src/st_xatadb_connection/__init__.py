@@ -248,7 +248,13 @@ class XataConnection(BaseConnection[XataClient]):
         super().__init__(connection_name,**kwargs)
 
 
-    def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None,table_names:Optional[list]=None,**kwargs) -> None:
+    def _connect(self,api_key:Optional[str]=None,
+                db_url:Optional[str]=None,
+                table_names:Optional[list]=None,
+                fixdates:Optional[bool]=False,
+                return_metadata:Optional[bool]=True,
+                returntype:Optional[Union[Literal['dataframe','dict'],type]]=ApiResponse,
+                **kwargs) -> None:
         """
         The `_connect` function establishes a connection to a database using an API key and a database URL.
 
@@ -264,6 +270,11 @@ class XataConnection(BaseConnection[XataClient]):
         :type table_names: Optional[list]
         :raises ConnectionRefusedError: If the API key or the database URL cannot be found.
         """
+
+        self._fixdates = fixdates
+        self._return_metadata = return_metadata
+        self._returntype = returntype
+
         if api_key is None:
             if "XATA_API_KEY" in self._secrets:
                 api_key = self._secrets["XATA_API_KEY"]
@@ -271,11 +282,18 @@ class XataConnection(BaseConnection[XataClient]):
                 api_key = os.environ.get("XATA_API_KEY")
             else:
                 raise ConnectionRefusedError("No API key found. Please set the XATA_API_KEY environment variable or add it to the secrets manager.")
+
         if db_url is None:
             if "XATA_DB_URL" in self._secrets:
                 db_url = self._secrets["XATA_DB_URL"]
             elif "XATA_DB_URL" in os.environ:
+                #If the db_url is not provided, it will be neecessary to specify the database  name and the region on each query
                 db_url = os.environ.get("XATA_DB_URL")
+            elif 'db_name' in kwargs:
+                try:
+                    db_url  = XataClient(db_name=kwargs['db_name']).databases().get_base_url()
+                except Exception as err:
+                    raise ConnectionRefusedError("No database URL found. Please set the XATA_DB_URL environment variable or add it to the secrets manager.") from err
 
         if db_url is None:
             self._client = XataClient(api_key=api_key,**kwargs)
@@ -283,11 +301,16 @@ class XataConnection(BaseConnection[XataClient]):
             self._client = XataClient(api_key=api_key,db_url=db_url,**kwargs)
 
         if table_names is not None and db_url is not None:
+            #Now you need to use the database name once and automatically the base url will be set
+            #the database url is necessary to get the schema of the tables so if it is not provided, the tables will not be created
             self._table_names = table_names
             for table_name in table_names:
                 setattr(self,table_name,XataTable(self._client,table_name))
 
-    def query(self,table_name:str,full_query:Optional[dict]=None,consistency:Optional[Literal['strong','eventual']]=None,**kwargs) -> ApiResponse:
+    def query(self,table_name:str,
+            full_query:Optional[dict]=None,
+            consistency:Optional[Literal['strong','eventual']]=None,
+            **kwargs) -> ApiResponse:
         """
         The function `query` takes a table name, a full query dictionary, a consistency level, and additional keyword
         arguments, and returns an API response.
@@ -298,8 +321,7 @@ class XataConnection(BaseConnection[XataClient]):
         :type table_name: str
         :param full_query: The `full_query` parameter is a dictionary that contains the details of the query to be executed.
         :type full_query: Optional[dict]
-        :param consistency: The `consistency` parameter is an optional parameter that specifies the consistency level for
-        the query. It can have two possible values: "strong" or "eventual". If set to "strong", the query will return the
+        :param consistency: The `consistency` parameter is an optional parameter that specifies the consistency level for the query. It can have two possible values: "strong" or "eventual". If set to "strong", the query will return the
         most up-to-date data, but it may have a higher latency.
         :type consistency: Optional[Literal['strong','eventual']]
         :return: an ApiResponse.
