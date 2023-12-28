@@ -519,8 +519,83 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
+    def bulk_insert(self, table_name: str, records: list, **kwargs) -> ApiResponse:
+        """
+        Inserts multiple records into the specified table.
 
-    def _fix_dates(self,payload:dict,time_zone:Optional[timezone]=timezone.utc) -> dict:
+        Args:
+            table_name (str): The name of the table to insert records into.
+            records (list): A list of records to be inserted.
+            **kwargs: Additional keyword arguments to be passed to the underlying API.
+
+        Returns:
+            ApiResponse: The response from the API.
+
+        Raises:
+            XataServerError: If the API response indicates an error.
+        """
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.records().bulk_insert(f'{table_name}', {'records': records}, **kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code, response.server_message())
+
+        return response
+
+    def upload_file(self,table_name:str,record_id:str,column_name:str,file_content:Union[str,bytes],**kwargs) -> ApiResponse:
+            """
+            Uploads a file to the specified table, record, and column in the XataDB database.
+
+            Args:
+                table_name (str): The name of the table where the file will be uploaded.
+                record_id (str): The ID of the record where the file will be uploaded.
+                column_name (str): The name of the column where the file will be uploaded.
+                file_content (Union[str,bytes]): The content of the file to be uploaded.
+                **kwargs: Additional keyword arguments to be passed to the XataDB API.
+
+            Returns:
+                ApiResponse: The response from the XataDB API.
+
+            Raises:
+                XataServerError: If the API response is not successful.
+            """
+
+            client = self._call_client(**self.client_kwargs)
+            response = client.files().put(f'{table_name}',record_id,column_name,file_content,**kwargs)
+
+            if not response.is_success():
+                raise XataServerError(response.status_code,response.server_message())
+
+            return response
+
+    def append_file(self,table_name:str,record_id:str,column_name:str,file_content:Union[str,bytes],**kwargs) -> ApiResponse:
+            """
+            Appends a file to a specific column in a record of a table.
+
+            Args:
+                table_name (str): The name of the table.
+                record_id (str): The ID of the record.
+                column_name (str): The name of the column.
+                file_content (Union[str, bytes]): The content of the file to be appended.
+                **kwargs: Additional keyword arguments to be passed to the underlying API.
+
+            Returns:
+                ApiResponse: The response from the API.
+
+            Raises:
+                XataServerError: If the API response is not successful.
+            """
+
+            client = self._call_client(**self.client_kwargs)
+            response = client.files().put_item(f'{table_name}',record_id,column_name,file_content,**kwargs)
+
+            if not response.is_success():
+                raise XataServerError(response.status_code,response.server_message())
+
+            return response
+
+    def _fix_dates(self,payload:dict,time_zone:Optional[timezone]=timezone.utc,table_name:str='') -> dict:
         sch = self.schema
         sch = sch[sch['type'].isin(['date','datetime','string'])]
 
@@ -533,7 +608,6 @@ class XataConnection(BaseConnection[XataClient]):
                 date_without_time = datetime.strptime(payload[col], "%Y-%m-%d %H:%M:%S")
 
             payload[col] = to_rfc339(date_without_time,time_zone)
-
 
     def __call__(self) -> XataClient:
         """
