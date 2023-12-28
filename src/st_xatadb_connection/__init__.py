@@ -251,7 +251,6 @@ class XataConnection(BaseConnection[XataClient]):
         """
         super().__init__(connection_name,**kwargs)
 
-
     def _connect(self,api_key:Optional[str]=None,
                 db_url:Optional[str]=None,
                 table_names:Optional[list]=None,
@@ -358,7 +357,6 @@ class XataConnection(BaseConnection[XataClient]):
         else:
             return XataClient(api_key=api_key,db_url=db_url,**kwargs)
 
-
     def query(self,table_name:str,
             full_query:Optional[dict]=None,
             consistency:Optional[Literal['strong','eventual']]=None,
@@ -394,14 +392,11 @@ class XataConnection(BaseConnection[XataClient]):
 
         if full_query is None:
             response = client.data().query(f'{table_name}',**kwargs)
-
-            if not response.is_success():
-                raise XataServerError(response.status_code,response.server_message())
         else:
             response = client.data().query(f'{table_name}',full_query,**kwargs)
 
-            if not response.is_success():
-                raise XataServerError(response.status_code,response.server_message())
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
 
         return response
 
@@ -450,14 +445,11 @@ class XataConnection(BaseConnection[XataClient]):
 
         if record_id is not None:
             response = client.records().insert_with_id(f'{table_name}',record_id,record,**kwargs)
-
-            if not response.is_success():
-                raise XataServerError(response.status_code,response.server_message())
         else:
             response = client.records().insert(f'{table_name}',record,**kwargs)
 
-            if not response.is_success():
-                raise XataServerError(response.status_code,response.server_message())
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
 
         return response
 
