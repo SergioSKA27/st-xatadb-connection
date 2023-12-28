@@ -544,57 +544,57 @@ class XataConnection(BaseConnection[XataClient]):
         return response
 
     def upload_file(self,table_name:str,record_id:str,column_name:str,file_content:Union[str,bytes],**kwargs) -> ApiResponse:
-            """
-            Uploads a file to the specified table, record, and column in the XataDB database.
+        """
+        Uploads a file to the specified table, record, and column in the XataDB database.
 
-            Args:
-                table_name (str): The name of the table where the file will be uploaded.
-                record_id (str): The ID of the record where the file will be uploaded.
-                column_name (str): The name of the column where the file will be uploaded.
-                file_content (Union[str,bytes]): The content of the file to be uploaded.
-                **kwargs: Additional keyword arguments to be passed to the XataDB API.
+        Args:
+            table_name (str): The name of the table where the file will be uploaded.
+            record_id (str): The ID of the record where the file will be uploaded.
+            column_name (str): The name of the column where the file will be uploaded.
+            file_content (Union[str,bytes]): The content of the file to be uploaded.
+            **kwargs: Additional keyword arguments to be passed to the XataDB API.
 
-            Returns:
-                ApiResponse: The response from the XataDB API.
+        Returns:
+            ApiResponse: The response from the XataDB API.
 
-            Raises:
-                XataServerError: If the API response is not successful.
-            """
+        Raises:
+            XataServerError: If the API response is not successful.
+        """
 
-            client = self._call_client(**self.client_kwargs)
-            response = client.files().put(f'{table_name}',record_id,column_name,file_content,**kwargs)
+        client = self._call_client(**self.client_kwargs)
+        response = client.files().put(f'{table_name}',record_id,column_name,file_content,**kwargs)
 
-            if not response.is_success():
-                raise XataServerError(response.status_code,response.server_message())
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
 
-            return response
+        return response
 
     def append_file_to_array(self,table_name:str,record_id:str,column_name:str,file_id: str,file_content:Union[str,bytes],**kwargs) -> ApiResponse:
-            """
-            Appends a file to a specific column in a record of a table.
+        """
+        Appends a file to a specific column in a record of a table.
 
-            Args:
-                table_name (str): The name of the table.
-                record_id (str): The ID of the record.
-                column_name (str): The name of the column.
-                file_id (str): The ID of the file to be appended.
-                file_content (Union[str, bytes]): The content of the file to be appended.
-                **kwargs: Additional keyword arguments to be passed to the underlying API.
+        Args:
+            table_name (str): The name of the table.
+            record_id (str): The ID of the record.
+            column_name (str): The name of the column.
+            file_id (str): The ID of the file to be appended.
+            file_content (Union[str, bytes]): The content of the file to be appended.
+            **kwargs: Additional keyword arguments to be passed to the underlying API.
 
-            Returns:
+        Returns:
                 ApiResponse: The response from the API.
 
-            Raises:
-                XataServerError: If the API response is not successful.
-            """
+        Raises:
+            XataServerError: If the API response is not successful.
+        """
 
-            client = self._call_client(**self.client_kwargs)
-            response = client.files().put_item(f'{table_name}',record_id,column_name,file_id,file_content,**kwargs)
+        client = self._call_client(**self.client_kwargs)
+        response = client.files().put_item(f'{table_name}',record_id,column_name,file_id,file_content,**kwargs)
 
-            if not response.is_success():
-                raise XataServerError(response.status_code,response.server_message())
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
 
-            return response
+        return response
 
     def get_file(self,table_name:str,record_id:str,column_name:str,**kwargs) -> ApiResponse:
 
@@ -614,12 +614,40 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
+    def delete_file(self,table_name:str,record_id:str,column_name:str,**kwargs) -> ApiResponse:
+
+        client = self._call_client(**self.client_kwargs)
+        response = client.files().delete(f'{table_name}',record_id,column_name,**kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
+
     def delete_file_from_array(self,table_name:str,record_id:str,column_name:str,file_id:str,**kwargs) -> ApiResponse:
 
         client = self._call_client(**self.client_kwargs)
         response = client.files().delete_item(f'{table_name}',record_id,column_name,file_id,**kwargs)
         if not response.is_success():
             raise XataServerError(response.status_code,response.server_message())
+
+        return response
+
+    def image_transform(self, image_url: str, transformations: dict, **kwargs) -> bytes:
+        """
+        Transforms an image using the specified transformations.
+
+        Args:
+            image_url (str): The URL of the image to transform.
+            transformations (dict): A dictionary containing the transformations to apply to the image.
+            **kwargs: Additional keyword arguments.
+
+            Returns:
+                bytes: The transformed image data.
+
+        """
+        client = self._call_client(**self.client_kwargs)
+        response = client.files().transform(image_url, transformations)
 
         return response
 
