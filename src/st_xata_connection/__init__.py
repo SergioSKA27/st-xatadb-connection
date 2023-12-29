@@ -1,8 +1,9 @@
 from __future__ import annotations
+
 import os
 import re
-from pathlib import Path
-from typing import Literal, Optional, Tuple, Union, types
+
+from typing import Literal, Optional, Union
 
 
 from streamlit.connections import BaseConnection
@@ -11,7 +12,7 @@ from xata.helpers import to_rfc339
 from xata.api_response import ApiResponse
 from xata.errors import XataServerError
 from datetime import datetime, timezone
-
+from pandas import DataFrame
 
 #from streamlit.runtime.caching import cache_data
 
@@ -25,9 +26,6 @@ class XataConnection(BaseConnection[XataClient]):
     """"
     XataDBConnection is a class that represents a connection to a Xata database.
     It is used to connect to a Xata database and perform various operations on the database.
-    attributes:
-    - client: The `XataClient` object that represents the connection to the database.
-    - table_names: A list of table names that you want to access.
 
     for more information visit: https://xata-py.readthedocs.io/en/latest/api.html#
 
@@ -456,7 +454,7 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
-    def askai(self,reference_table:str,question:str, rules: Optional[list]=[], options: Optional[dict]={},**kwargs)->ApiResponse:
+    def askai(self,reference_table:str,question:str, rules: Optional[list]=None, options: Optional[dict]=None,**kwargs)->ApiResponse:
         """
         The function `askai` takes in a reference table, a question, optional rules and options, and returns an API
         response.
@@ -481,6 +479,10 @@ class XataConnection(BaseConnection[XataClient]):
         """
 
         client = self._call_client(**self.client_kwargs)
+        if rules is None:
+            rules = []
+        if options is None:
+            options = {}
         response = client.data().ask(reference_table,question,rules=rules,options=options,**kwargs)
 
         if not response.is_success():
@@ -650,7 +652,8 @@ class XataConnection(BaseConnection[XataClient]):
         return response
 
     def _fix_dates(self,payload:dict,time_zone:Optional[timezone]=timezone.utc,table_name:str='') -> dict:
-        sch = self.schema
+        client = self._call_client(**self.client_kwargs)
+        sch = DataFrame(client.table().get_schema(table_name))
         sch = sch[sch['type'].isin(['date','datetime','string'])]
 
         for col in sch['name']:
