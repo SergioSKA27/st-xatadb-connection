@@ -179,7 +179,7 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
-    def get_record(self,table_name:str,record_id:str,**kwargs) -> ApiResponse:
+    def get(self,table_name:str,record_id:str,**kwargs) -> ApiResponse:
         """
         The function `get_record` retrieves a record from a specified table using the provided record ID.
 
