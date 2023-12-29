@@ -90,8 +90,6 @@ class XataConnection(BaseConnection[XataClient]):
         except Exception as err:
             raise ConnectionRefusedError("Could not connect to the database. Please check your credentials and try again.") from err
 
-
-
     def  _call_client(self,api_key:Optional[str]=None,db_url:Optional[str]=None,**kwargs) -> XataClient:
         """
         The `_call_client` function is used to create an instance of the `XataClient` class with the provided API key and
