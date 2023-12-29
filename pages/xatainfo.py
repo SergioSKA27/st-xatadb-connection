@@ -1,7 +1,7 @@
 import streamlit as st
 
 
-st.markdown('<h1> Streamlit Xata Data Base Connection <img src="https://xata.io/icon.svg?9d7a66ec4c0ad6b1" width="50" height="50" align-items="center"/></h1>', unsafe_allow_html=True)
+st.markdown('<h1> Xata Data Base  <img src="https://xata.io/icon.svg?9d7a66ec4c0ad6b1" width="50" height="50" align-items="center"/></h1>', unsafe_allow_html=True)
 st.markdown('''
 
 ## What is Xata?
@@ -16,7 +16,12 @@ It is also vertically integrated: an advanced admin UI and high-level SDKs come 
 
 :blue[They call this type of service a Serverless Data Platform.]''',unsafe_allow_html=True)
 
-st.image('https://xata.io/_next/image?url=%2Fmdx%2Fdocs%2F030-Concepts%2Fserverless-data-platform.png&w=1920&q=75',width=600)
+
+st.markdown('''
+<div style="align-items: center;justify-content: center;display: flex;">
+<img src="https://xata.io/_next/image?url=%2Fmdx%2Fdocs%2F030-Concepts%2Fserverless-data-platform.png&w=1920&q=75" width="600" style="background-color: grey; border-radius: 10px; padding: 10px; margin: 10px;"/>
+</div>
+''',unsafe_allow_html=True)
 
 st.markdown('''
 This type of service has several benefits:
@@ -69,7 +74,13 @@ as well as other authentication providers.
 </div>''',unsafe_allow_html=True)
 
 
-st.image('https://xata.io/_next/image?url=%2Fmdx%2Fdocs%2F030-Concepts%2Fbaas-vs-sdp.png&w=1920&q=75',width=600)
+
+st.markdown('''
+<div style="align-items: center;justify-content: center;display: flex;">
+<img src="https://xata.io/_next/image?url=%2Fmdx%2Fdocs%2F030-Concepts%2Fbaas-vs-sdp.png&w=1920&q=75" width="600" style="background-color: grey; border-radius: 10px; padding: 10px; margin: 10px;"/>
+</div>
+''',unsafe_allow_html=True)
+
 
 
 st.markdown('''

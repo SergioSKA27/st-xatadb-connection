@@ -2,13 +2,18 @@ import streamlit as st
 
 st.set_page_config(layout="wide")
 
-st.markdown('<h1> Streamlit Xata Data Base Connection <img src="https://xata.io/icon.svg?9d7a66ec4c0ad6b1" width="50" height="50" align-items="center"/></h1>',
-unsafe_allow_html=True)
+st.markdown('''
+<h1 style="font-family:Courier; text-align:center;">Streamlit Xata Data Base Connection
+<img src="https://xata.io/icon.svg?9d7a66ec4c0ad6b1" width="50" height="50" align-items="center"/>
+</h1>
+''',unsafe_allow_html=True)
+#<img src="https://streamlit.io/images/brand/streamlit-logo-primary-colormark-darktext.svg" width="100" height="50" align-items="center"/>
+
 st.caption('By: Sergio Demis Lopez Martinez')
 st.divider()
 
 st.markdown('''
-<h1 style="font-family:Courier; text-align:center;">Xata and Streamlit </h1>
+<h1 style="font-family:Courier; text-align:center;padding-bottom:0px;">Xata and Streamlit </h1>
 <h2 style="font-family:Courier; text-align:center;">A Dynamic Duo for Building Powerful Web Applications</h2>
 ''', unsafe_allow_html=True)
 
@@ -90,7 +95,7 @@ Here's a sneak peek into how incredibly simple it is to use st_xatadb_connection
 
 st.code("""
 import streamlit as st
-from st_xatadb_connection import XataConnection
+from st_xata_connection import XataConnection
 
 # Connect to your Xata.io database
 xata = st.connection('xata', type=XataConnection)
@@ -134,9 +139,10 @@ you can build amazing web applications with Xata and Streamlit!
 
 
 st.markdown('''
+---
 
 <h1 style="text-align:center;font-family: Courier">
-Xata: The Free Database with Generous Features
+Xata Free Database with Generous Features
 </h1>
 
 In the world of database management, Xata stands out as a shining example of generosity and power. This cloud-based
@@ -166,12 +172,6 @@ Use AI to perform tasks such as sentiment analysis, image recognition, and langu
 
 With all these features available for free, Xata is the perfect choice for startups, individual developers,
 and anyone looking for a powerful and cost-effective database solution.
-
-### Experience the Xata Advantage Today
-
-Sign up for Xata today and discover the freedom and flexibility of a truly free database.
-With its generous feature set and commitment to data security and availability,
-Xata is the ideal platform for building your next web or mobile application.
 
 <div style="text-align:center;font-family: Courier">
 Join the growing community of developers who have chosen Xata as their trusted database partner.
