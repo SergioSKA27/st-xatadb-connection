@@ -417,7 +417,7 @@ class XataConnection(BaseConnection[XataClient]):
             raise XataServerError(response.status_code,response.server_message())
         return response
 
-    def transaction(self,payload:dict,**kwargs) -> ApiResponse:
+    def transaction(self,payload:Union[list[dict],dict],**kwargs) -> ApiResponse:
         """
         The function performs a transaction using a client and returns the response, raising an exception if the response is
         not successful.
@@ -428,9 +428,13 @@ class XataConnection(BaseConnection[XataClient]):
 
         :return: an ApiResponse object.
         """
+        if "operations" not in payload:
+            payl = {"operations":payload}
+        else:
+            payl = payload
 
         client = self._call_client(**self.client_kwargs)
-        response = client.records().transaction(payload,**kwargs)
+        response = client.records().transaction(payl,**kwargs)
 
         if not response.is_success():
             raise XataServerError(response.status_code,response.server_message())
