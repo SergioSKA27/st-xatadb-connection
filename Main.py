@@ -18,6 +18,9 @@ unsafe_allow_html=True)
 st.caption('By: Sergio Demis Lopez Martinez')
 st.divider()
 '''
+
+## What is Xata?
+
 ### Serverless data platform
 
 Xata is a new type of Cloud service: it combines multiple types of stores (relational database, search engine, analytics engine)
