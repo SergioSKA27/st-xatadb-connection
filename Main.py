@@ -162,4 +162,4 @@ This causes a lot of product teams to move away from BaaS when they grow past a 
 ''',unsafe_allow_html=True)
 
 with Profiler():
-    st.write(xata.query('Alumno'))
+    st.write(xata.query('Alumno',{'page': {'size': 2}}))
