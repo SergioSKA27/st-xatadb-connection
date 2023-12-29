@@ -1,5 +1,9 @@
 import streamlit as st
 
+st.set_page_config(layout="wide",
+page_icon="https://xata.io/icon.svg?9d7a66ec4c0ad6b1",
+initial_sidebar_state="collapsed", page_title="Streamlit Xata Connection")
+
 
 st.markdown('<h1> Xata Data Base  <img src="https://xata.io/icon.svg?9d7a66ec4c0ad6b1" width="50" height="50" align-items="center"/></h1>', unsafe_allow_html=True)
 st.markdown('''

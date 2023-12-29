@@ -1,8 +1,13 @@
 import streamlit as st
 
+st.set_page_config(layout="wide",
+page_icon="https://xata.io/icon.svg?9d7a66ec4c0ad6b1",
+initial_sidebar_state="collapsed", page_title="Streamlit Xata Connection")
+
 st.title('Getting Started with st_xata_connection')
 
 st.markdown('''
+---
 ## 1. Set up your Xata.io and Streamlit Environment
 
 
@@ -20,18 +25,18 @@ st.markdown('''
 ## 2. Configure your Xata Credentials
 
 To securely store your Xata API key and database URL, you can use Streamlit's secrets manager or environment variables.
+''',unsafe_allow_html=True)
 
-```
+st.code("""
 XATA_API_KEY = "YOUR_XATA_API_KEY"
 DATABASE_URL = "YOUR_XATA_DATABASE_URL"
-```
+""",language='toml')
 
+st.markdown('''
 ## 3. Connect to your Xata.io Database
 
 Import the `st_xatadb_connection` package and use the st.connection() function to connect to your Xata database.
-
-
-''',unsafe_allow_html=True)
+''')
 
 st.code("""
 import streamlit as st
