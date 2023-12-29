@@ -204,10 +204,16 @@ The `st_xatadb_connection` package is a powerful tool that makes it easy to conn
 In this article, we've covered the basics of using `st_xatadb_connection` to query your Xata database, insert, update, and delete data,
 work with files, perform transactions, and ask questions to the AI assistant. But there's a lot more you can do with `st_xatadb_connection`.
 
-We encourage you to explore the `st_xatadb_connection` documentation on this site to learn more about the package's capabilities.
+We encourage you to explore the `st_xatadb_connection` documentation on this site to learn more about the package's capabilities and
+also check out the Xata documentation to learn more about the Xata service and all the features it offers.
 We also encourage you to check out the `st_xatadb_connection` GitHub repository to see the source code and contribute to the project.
+
+- [Xata Documentation](https://xata.io/docs/)
+
+- [GitHub Repository](https://github.com/SergioSKA27/st-xatadb-connection)
 
 <div style="text-align:center;font-family:monospace;font-size:18px">
 Thank you for reading this article!<br> We hope you found it useful and that it will help you build amazing data-driven web applications with Xata and Streamlit.
 </div>
 ''',unsafe_allow_html=True)
+st.caption('By: Sergio Demis Lopez Martinez')
