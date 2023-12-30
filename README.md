@@ -29,7 +29,7 @@ DATABASE_URL = "YOUR_XATA_DATABASE_URL"
 
 ## 3. Connect to your Xata.io Database
 
-Import the `st_xatadb_connection` package and use the st.connection() function to connect to your Xata database.
+Import the `st_xata_connection` package and use the st.connection() function to connect to your Xata database.
 You could also use the the `st.session_state` object to store the connection object and reuse it across your Streamlit app.
 
 ``` python
@@ -166,6 +166,6 @@ The response looks like this:
 
 ---
 
-The `st_xatadb_connection` package is a powerful tool that makes it easy to connect your Streamlit app to your Xata database.
-In this article, we've covered the basics of using `st_xatadb_connection` to query your Xata database, insert, update, and delete data,
-work with files, perform transactions, and ask questions to the AI assistant. But there's a lot more you can do with `st_xatadb_connection`.
+The `st_xata_connection` package is a powerful tool that makes it easy to connect your Streamlit app to your Xata database.
+In this article, we've covered the basics of using `st_xata_connection` to query your Xata database, insert, update, and delete data,
+work with files, perform transactions, and ask questions to the AI assistant. But there's a lot more you can do with `st_xata_connection`.
