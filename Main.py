@@ -50,10 +50,6 @@ Its cloud-based architecture can seamlessly scale up or down as your data grows 
 
 ''',unsafe_allow_html=True)
 
-cols = st.columns([0.2,0.6,0.2])
-
-with cols[1]:
-    st.video('https://www.youtube.com/watch?v=gXuyYIV_dmc',)
 
 st.markdown('''
 
@@ -143,20 +139,13 @@ st.markdown('''
 ---
 
 <h1 style="text-align:center;font-family: Courier">
-Xata Free Database with Generous Features
+Xata Free is a Free Cloud Database!
 </h1>
 
-In the world of database management, Xata stands out as a shining example of generosity and power. This cloud-based
-database offers an impressive array of features, all available for free:
+This cloud-based database offers an impressive array of features, all available for free:
 
 - **10 Database Branches**: Xata allows you to create and maintain up to 10 database branches, enabling you to experiment
 with different schemas and data structures without affecting your production data.
-
-- **High Availability**: Xata ensures that your data is always available, even in the event of hardware failures or network
-outages. Its multi-region architecture provides automatic failover and replication, guaranteeing 99.999% uptime.
-
-- **Support-Assisted Daily Backups**: Rest easy knowing that your data is safe with Xata's daily backups.
-And if you ever need to restore your data, Xata's support team is ready to assist you every step of the way.
 
 - **15 GB of Free Storage**: Xata provides a generous 15 GB of storage space for your data, allowing you to store a
 substantial amount of information without worrying about exceeding limits.
@@ -169,7 +158,7 @@ This makes it easy to store images, documents, and other binary data alongside y
 
 - **250 AI Queries Per Month**: Xata provides a generous quota of 250 AI queries per month,
 enabling you to leverage artificial intelligence to extract insights from your data.
-Use AI to perform tasks such as sentiment analysis, image recognition, and language translation.
+
 
 With all these features available for free, Xata is the perfect choice for startups, individual developers,
 and anyone looking for a powerful and cost-effective database solution.
