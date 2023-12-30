@@ -51,9 +51,7 @@ results = xata.query("Table_Name")
 Use Streamlit functions like `st.write()`, `st.table()`,`st.json()`, or `st.dataframe()` to display your query results in your Streamlit app.
 
 ```python
-st.code("""
 st.write(results)
-""", language='python')
 ```
 
 ## 6. Insert, Update, and Delete Data
@@ -61,15 +59,12 @@ st.write(results)
 You can also use st_xatadb_connection to insert, update, and delete data in your Xata.io database.
 
 ``` python
-st.code("""
 record = {
     "name": "John Doe",
     "age": 30,
     "email": "a@b.com"
 }
-
 response = xata.insert("Table_Name", record)
-""", language='python')
 ```
 
 The `xata.insert()` function returns a response object that contains the information about the inserted record.
@@ -167,6 +162,8 @@ The response looks like this:
   ]
 }
 ```
+
+---
 
 The `st_xatadb_connection` package is a powerful tool that makes it easy to connect your Streamlit app to your Xata database.
 In this article, we've covered the basics of using `st_xatadb_connection` to query your Xata database, insert, update, and delete data,
