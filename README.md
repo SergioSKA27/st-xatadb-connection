@@ -30,6 +30,7 @@ DATABASE_URL = "YOUR_XATA_DATABASE_URL"
 ## 3. Connect to your Xata.io Database
 
 Import the `st_xatadb_connection` package and use the st.connection() function to connect to your Xata database.
+You could also use the the `st.session_state` object to store the connection object and reuse it across your Streamlit app.
 
 ``` python
 import streamlit as st
