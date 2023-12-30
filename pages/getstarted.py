@@ -1,7 +1,6 @@
 import streamlit as st
 
 st.set_page_config(layout="wide",
-page_icon="https://xata.io/icon.svg?9d7a66ec4c0ad6b1",
 initial_sidebar_state="collapsed", page_title="Streamlit Xata Connection")
 
 st.title('Getting Started with st_xata_connection')
@@ -198,7 +197,7 @@ st.code("""
     "8ae4837002e21f013aa85c30a126ea1c",
     "4b137344a3c53d5152c45ed514188cd2"
   ]
-}'""",language='json')
+}""",language='json')
 
 
 st.markdown('''
