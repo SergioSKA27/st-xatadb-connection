@@ -5,6 +5,8 @@ Xata Data Base Connection Streamlit
 
 ---
 
+# Getting Started with st_xata_connection
+
 ## 1. Set up your Xata.io and Streamlit Environment
 
 - Create a Xata account and database at [Xata Web](https://xata.io).
