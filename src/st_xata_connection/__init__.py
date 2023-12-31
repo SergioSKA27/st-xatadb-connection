@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 import re
 
-from typing import Literal, Optional, Union
+from typing import Literal, Optional, Union,List,Dict
 
 
 from streamlit.connections import BaseConnection
@@ -41,13 +41,7 @@ class XataConnection(BaseConnection[XataClient]):
         """
         super().__init__(connection_name,**kwargs)
 
-    def _connect(self,api_key:Optional[str]=None,
-                db_url:Optional[str]=None,
-                table_names:Optional[list]=None,
-                fixdates:Optional[bool]=False,
-                return_metadata:Optional[bool]=True,
-                returntype:Optional[Union[Literal['dataframe','dict'],type]]=ApiResponse,
-                **kwargs) -> None:
+    def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None,**kwargs) -> None:
         """
         The `_connect` function establishes a connection to a database using an API key and a database URL.
 
@@ -76,10 +70,6 @@ class XataConnection(BaseConnection[XataClient]):
             -The kwargs parameter is used to pass additional keyword arguments to the `XataClient` constructor.
 
         """
-
-        self._fixdates = fixdates
-        self._return_metadata = return_metadata
-        self._returntype = returntype
         self.client_kwargs = kwargs
         self._table_names = None
 
@@ -136,10 +126,7 @@ class XataConnection(BaseConnection[XataClient]):
         else:
             return XataClient(api_key=api_key,db_url=db_url,**kwargs)
 
-    def query(self,table_name:str,
-            full_query:Optional[dict]=None,
-            consistency:Optional[Literal['strong','eventual']]=None,
-            **kwargs) -> ApiResponse:
+    def query(self,table_name:str,full_query:Optional[dict]=None,consistency:Optional[Literal['strong','eventual']]=None,**kwargs) -> ApiResponse:
 
         """
         This function queries a table in a database using the provided parameters and returns the response.
@@ -153,7 +140,7 @@ class XataConnection(BaseConnection[XataClient]):
         :type full_query: Optional[dict]
 
         :param consistency: The `consistency` parameter is used to specify the consistency level for the query. It can have
-        two possible values: 'strong' or 'eventual'.
+        two possible values: 'strong' or 'eventual'. If not provided, the default consistency defaults to 'strong'
         :type consistency: Optional[Literal['strong','eventual']]
 
         :return: an instance of the `ApiResponse` class.
@@ -417,7 +404,7 @@ class XataConnection(BaseConnection[XataClient]):
             raise XataServerError(response.status_code,response.server_message())
         return response
 
-    def transaction(self,payload:Union[list[dict],dict],**kwargs) -> ApiResponse:
+    def transaction(self,payload:Union[List[Dict],Dict],**kwargs) -> ApiResponse:
         """
         The function performs a transaction using a client and returns the response, raising an exception if the response is
         not successful.
@@ -655,7 +642,7 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
-    def _fix_dates(self,payload:dict,time_zone:Optional[timezone]=timezone.utc,table_name:str='') -> dict:
+    def fix_dates(self,payload:dict,time_zone:Optional[timezone]=timezone.utc,table_name:str='') -> dict:
         client = self._call_client(**self.client_kwargs)
         sch = DataFrame(client.table().get_schema(table_name))
         sch = sch[sch['type'].isin(['date','datetime','string'])]
@@ -676,3 +663,74 @@ class XataConnection(BaseConnection[XataClient]):
         :return: The method is returning an instance of the XataClient class.
         """
         return self._call_client(**self.client_kwargs)
+
+    def next_page(self, table_name: str, response_prev: ApiResponse,
+                    pagesize: Optional[int] = 20,
+                    offset: Optional[int] = None,
+                    limit: Optional[int] = None,
+                    consistency: Optional[Literal['strong', 'eventual']] = None,
+                    **kwargs) -> Union[ApiResponse, None]:
+        """
+        Retrieves the next page of results from the specified table.
+
+        Args:
+            table_name (str): The name of the table to query.
+            response_prev (ApiResponse): The previous API response containing the cursor for the next page.
+            pagesize (int, optional): The number of results to retrieve per page. Defaults to 20.
+            offset (int, optional): The offset to start retrieving results from. Defaults to None.
+            consistency (str, optional): The consistency level to use for the query. Defaults to None.
+            **kwargs: Additional keyword arguments to pass to the query.
+
+        Returns:
+            Union[ApiResponse, None]: The next page of results as an ApiResponse object, or None if there are no more results.
+        """
+        client = self._call_client(**self.client_kwargs)
+
+        _next = {'size': pagesize, 'after': response_prev.get_cursor()}
+        if offset is not None:
+            _next['offset'] = offset
+
+        if limit is not None:
+            _next['limit'] = limit
+
+        if consistency is not None:
+            _next['consistency'] = consistency
+
+        if response_prev.has_more_results():
+            nextpage = client.data().query(f'{table_name}', {'page': _next}, **kwargs)
+
+            if not nextpage.is_success():
+                raise XataServerError(nextpage.status_code, nextpage.server_message())
+        else:
+            nextpage = None
+
+        return nextpage
+
+    def prev_page(self, table_name: str, response_after: ApiResponse,
+                    pagesize: Optional[int] = 20,
+                    offset: Optional[int] = None,
+                    limit: Optional[int] = None,
+                    consistency: Optional[Literal['strong', 'eventual']] = None,
+                    **kwargs) -> Union[ApiResponse, None]:
+
+        client = self._call_client(**self.client_kwargs)
+
+        _next = {'size': pagesize, 'before': response_after.get_cursor()}
+        if offset is not None:
+            _next['offset'] = offset
+
+        if limit is not None:
+            _next['limit'] = limit
+
+        if consistency is not None:
+            _next['consistency'] = consistency
+
+        if response_after.has_more_results():
+            nextpage = client.data().query(f'{table_name}', {'page': _next}, **kwargs)
+
+            if not nextpage.is_success():
+                raise XataServerError(nextpage.status_code, nextpage.server_message())
+        else:
+            nextpage = None
+
+        return nextpage
