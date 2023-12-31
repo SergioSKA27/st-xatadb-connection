@@ -15,8 +15,8 @@ from datetime import datetime, timezone
 from pandas import DataFrame
 
 #from streamlit.runtime.caching import cache_data
-
-__version__ = "0.1.0"
+#By: Sergio Demis Lopez Martinez
+__version__ = "1.0.0"
 
 
 
@@ -72,6 +72,7 @@ class XataConnection(BaseConnection[XataClient]):
         """
         self.client_kwargs = kwargs
         self._table_names = None
+        self.__secrets = {'XATA_API_KEY': api_key, 'XATA_DB_URL': db_url} # Not recommended  to pass the api_key and db_url as kwargs
 
         try:
             self._call_client(api_key=api_key,db_url=db_url,**kwargs) # Verify that the connection is working
@@ -102,10 +103,11 @@ class XataConnection(BaseConnection[XataClient]):
                 api_key = self._secrets["XATA_API_KEY"]
             elif "XATA_API_KEY" in os.environ:
                 api_key = os.environ.get("XATA_API_KEY")
+            elif 'XATA_API_KEY' in self.__secrets and self.__secrets['XATA_API_KEY'] is not None:
+                api_key = self.__secrets['XATA_API_KEY']
             else:
                 raise ConnectionRefusedError("No API key found. Please set the XATA_API_KEY environment variable or add it to the secrets manager.")
-        else:
-            os.environ["XATA_API_KEY"] = api_key
+
 
         if db_url is None:
             if "XATA_DB_URL" in self._secrets:
@@ -113,14 +115,10 @@ class XataConnection(BaseConnection[XataClient]):
             elif "XATA_DB_URL" in os.environ:
                 #If the db_url is not provided, it will be neecessary to specify the database  name and the region on each query
                 db_url = os.environ.get("XATA_DB_URL")
-            elif 'db_name' in kwargs:
-                try:
-                    db_url  = XataClient(db_name=kwargs['db_name'],api_key=api_key).databases().get_base_url()
-                except Exception as err:
-                    raise ConnectionRefusedError("No database URL found. Please set the XATA_DB_URL environment variable or add it to the secrets manager.") from err
-        else:
-            os.environ["XATA_DB_URL"] = db_url
-
+            elif "XATA_DB_URL" in self.__secrets and self.__secrets["XATA_DB_URL"] is not None:
+                db_url = self.__secrets["XATA_DB_URL"]
+            else:
+                raise ConnectionRefusedError("No database URL found. Please set the XATA_DB_URL environment variable or add it to the secrets manager.")
         if db_url is None:
             return XataClient(api_key=api_key,**kwargs)
         else:
