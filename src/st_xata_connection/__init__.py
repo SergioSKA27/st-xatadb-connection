@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import os
-import re
-
 from typing import Literal, Optional, Union,List,Dict,Tuple
 
 
@@ -12,7 +10,7 @@ from xata.helpers import to_rfc339,BulkProcessor,Transaction
 from xata.api_response import ApiResponse
 from xata.errors import XataServerError
 from datetime import datetime, timezone
-from pandas import DataFrame
+
 
 #BUG: It does not work with the cache_data decorator it does not allow to retrieve the data in real time
 #when the data is updated in the database you try to retrieve the data with the cache_data decorator it retrieves the
