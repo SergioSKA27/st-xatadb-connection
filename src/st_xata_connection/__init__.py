@@ -3,12 +3,12 @@ from __future__ import annotations
 import os
 import re
 
-from typing import Literal, Optional, Union,List,Dict
+from typing import Literal, Optional, Union,List,Dict,Tuple
 
 
 from streamlit.connections import BaseConnection
 from xata.client import XataClient
-from xata.helpers import to_rfc339
+from xata.helpers import to_rfc339,BulkProcessor,Transaction
 from xata.api_response import ApiResponse
 from xata.errors import XataServerError
 from datetime import datetime, timezone
@@ -46,6 +46,65 @@ class XataConnection(BaseConnection[XataClient]):
         _table_names: The `_table_names` attribute is a list that contains the names of the tables in the database.
         It is used to store the names of the tables in the database so that they can be retrieved later.
         :type _table_names: list
+
+    methods:
+        __init__: The above function is a constructor that initializes an object with an optional connection name parameter.
+
+        __call__: This method is used to create an instance of the XataClient class.
+
+        _connect: Connects to the Xata database using the provided API key and database URL.
+
+        query: Executes a query on the specified table.
+
+        get: The function `get_record` retrieves a record from a specified table using the provided record ID.
+
+        insert: The function inserts a record into a table with an optional record ID.
+
+        replace: The function replaces a record in a table with a new record using the provided record ID and record data.
+
+        update: The function updates a record in a specified table using the provided record ID and record data.
+
+        delete: The function deletes a record from a specified table using the provided record ID.
+
+        search: The function searches for a specific query in a branch and returns the results.
+
+        search_on_table: The function searches for data in a specified table using a search query and returns the response.
+
+        vector_search: The function performs a vector search on a specified table using a search query and returns the response.
+
+        aggregate: The function aggregates data from a specified table using a given query and returns the response.
+
+        summarize: The function takes a table name and a summarize query to summarize the data in the table, and returns the response.
+
+        transaction: The function performs a transaction using a client and returns the response, raising an exception if the response is not successful.
+
+        sql_query: The function executes an SQL query using a client and returns the response.
+
+        askai: The function `askai` takes in a reference table, a question, optional rules and options, and returns an API response.
+
+        askai_follow_up: The function `askai_follow_up` sends a follow-up question to an AI model using a reference table and a chat session ID.
+
+        bulk_insert: Inserts multiple records into the specified table.
+
+        upload_file: Uploads a file to the specified table, record, and column in the XataDB database.
+
+        append_file_to_array: Appends a file to a specific column in a record of a table.
+
+        get_file: Retrieves a file from the specified table, record, and column in the XataDB database.
+
+        get_file_from_array: Retrieves a file from a specific column in a record of a table.
+
+        delete_file: Deletes a file from the specified table, record, and column in the XataDB database.
+
+        delete_file_from_array: Deletes a file from a specific column in a record of a table.
+
+        image_transform: Transforms an image using the specified transformations.
+
+        next_page: Retrieves the next page of results from the specified table
+
+        prev_page: Retrieves the previous page of results from the specified table.
+
+        get_schema: Retrieves the schema of a table from the Xata database.
 
     """
 
@@ -766,3 +825,150 @@ class XataConnection(BaseConnection[XataClient]):
                 raise XataServerError(response.status_code, response.server_message())
 
             return response
+
+    def create_table(self, table_name: str, schema: dict, **kwargs) -> Tuple[ApiResponse, ApiResponse]:
+            """
+            Creates a table in the Xata database with the given table name and schema.
+
+            Args:
+                table_name (str): The name of the table to be created.
+                schema (dict): The schema of the table, represented as a dictionary.
+                **kwargs: Additional keyword arguments to be passed to the Xata client.
+
+            Returns:
+                Tuple[ApiResponse]: A tuple containing the response objects for table creation and schema setting.
+
+            Raises:
+                XataServerError: If the table creation or schema setting fails.
+            """
+            client = self.__call__(**self.client_kwargs)
+
+            response1 = client.table().create(table_name, **kwargs)
+
+            if not response1.is_success():
+                raise XataServerError(response1.status_code, response1.server_message())
+
+            response2 = client.table().set_schema(table_name, schema, **kwargs)
+
+            if not response2.is_success():
+                raise XataServerError(response2.status_code, response2.server_message())
+
+            return response1, response2
+
+    def delete_table(self, table_name: str, **kwargs) -> ApiResponse:
+            """
+            Deletes a table from the Xata database.
+
+            Args:
+                table_name (str): The name of the table to be deleted.
+                **kwargs: Additional keyword arguments to be passed to the Xata client.
+
+            Returns:
+                ApiResponse: The response from the Xata client.
+
+            Raises:
+                XataServerError: If the table deletion fails.
+            """
+            client = self.__call__(**self.client_kwargs)
+            response = client.table().delete(table_name, **kwargs)
+
+            if not response.is_success():
+                raise XataServerError(response.status_code, response.server_message())
+
+            return response
+
+    def create_column(self, table_name: str, column_config: dict, **kwargs) -> ApiResponse:
+        """
+        Creates a new column in the specified table.
+
+        Args:
+            table_name (str): The name of the table.
+            column_config (dict): The configuration of the column.
+            **kwargs: Additional keyword arguments to pass to the underlying API.
+
+        Returns:
+            ApiResponse: The response from the API.
+
+        Raises:
+            XataServerError: If the API response indicates an error.
+        """
+
+        client = self.__call__(**self.client_kwargs)
+        response = client.table().add_column(table_name, column_config, **kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code, response.server_message())
+
+        return response
+
+    def delete_column(self, table_name: str, column_name: str, **kwargs) -> ApiResponse:
+        """
+        Deletes a column from the specified table.
+
+        Args:
+            table_name (str): The name of the table.
+            column_name (str): The name of the column.
+            **kwargs: Additional keyword arguments to pass to the underlying API.
+
+        Returns:
+            ApiResponse: The response from the API.
+
+        Raises:
+            XataServerError: If the API response indicates an error.
+        """
+
+        client = self.__call__(**self.client_kwargs)
+        response = client.table().delete_column(table_name, column_name, **kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code, response.server_message())
+
+        return response
+
+    def get_columns(self, table_name: str, **kwargs) -> ApiResponse:
+        """
+        Retrieves the columns of the specified table.
+
+        Args:
+            table_name (str): The name of the table.
+            **kwargs: Additional keyword arguments to pass to the underlying API.
+
+        Returns:
+            ApiResponse: The response from the API.
+
+        Raises:
+            XataServerError: If the API response indicates an error.
+        """
+
+        client = self.__call__(**self.client_kwargs)
+        response = client.table().get_columns(table_name, **kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code, response.server_message())
+
+        return response
+
+    def bulk_processor(self,**kwargs) -> BulkProcessor:
+            """
+            Creates a BulkProcessor object with the specified keyword arguments.
+
+            Args:
+                **kwargs: Additional keyword arguments to be passed to the BulkProcessor constructor.
+
+            Returns:
+                BulkProcessor: The created BulkProcessor object.
+            """
+            return BulkProcessor(self.__call__(**self.client_kwargs),**kwargs)
+
+    def bulk_transaction(self,**kwargs) -> Transaction:
+            """
+            Additional abstraction for bulk requests that process' requests in parallel
+            :stability beta
+
+            Args:
+                **kwargs: Additional keyword arguments to be passed to the BulkTransaction constructor.
+
+            Returns:
+                BulkTransaction: The created BulkTransaction object.
+            """
+            return Transaction(self.__call__(**self.client_kwargs),**kwargs)
