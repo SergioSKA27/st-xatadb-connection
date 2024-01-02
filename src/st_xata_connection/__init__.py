@@ -31,7 +31,12 @@ class XataConnection(BaseConnection[XataClient]):
     XataDBConnection is a class that represents a connection to a Xata database.
     It is used to connect to a Xata database and perform various operations on the database.
 
-    for more information visit: https://xata-py.readthedocs.io/en/latest/api.html#
+    Xata Docs:
+    For more information about Xata, visit
+
+        - Xata Examples: https://xata.io/docs
+
+        - API documentation: https://xata-py.readthedocs.io/en/latest/api.html#
 
     atributtes:
         client_kwargs: The `client_kwargs` attribute is a dictionary that contains the keyword arguments that will be
@@ -105,6 +110,8 @@ class XataConnection(BaseConnection[XataClient]):
         prev_page: Retrieves the previous page of results from the specified table.
 
         get_schema: Retrieves the schema of a table from the Xata database.
+
+
 
     """
 
