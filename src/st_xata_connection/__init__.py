@@ -593,7 +593,9 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
-    def upload_file(self,table_name:str,record_id:str,column_name:str,file_content:Union[str,bytes],**kwargs) -> ApiResponse:
+    def upload_file(self,table_name:str,record_id:str,
+                column_name:str,file_content:Union[str,bytes],
+                content_type:Optional[str]='application/octet-stream',**kwargs) -> ApiResponse:
         """
         Uploads a file to the specified table, record, and column in the XataDB database.
 
@@ -602,6 +604,7 @@ class XataConnection(BaseConnection[XataClient]):
             record_id (str): The ID of the record where the file will be uploaded.
             column_name (str): The name of the column where the file will be uploaded.
             file_content (Union[str,bytes]): The content of the file to be uploaded.
+            content_type (Optional[str], optional): The content type of the file. Defaults to 'application/octet-stream'.
             **kwargs: Additional keyword arguments to be passed to the XataDB API.
 
         Returns:
@@ -612,7 +615,7 @@ class XataConnection(BaseConnection[XataClient]):
         """
 
         client = self.__call__(**self.client_kwargs)
-        response = client.files().put(f'{table_name}',record_id,column_name,file_content,**kwargs)
+        response = client.files().put(f'{table_name}',record_id,column_name,file_content,content_type,**kwargs)
 
         if not response.is_success():
             raise XataServerError(response.status_code,response.server_message())
@@ -646,51 +649,114 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
-    def get_file(self,table_name:str,record_id:str,column_name:str,**kwargs) -> ApiResponse:
+    def get_file(self, table_name: str, record_id: str, column_name: str, **kwargs) -> ApiResponse:
+        """
+        Retrieves a file from the specified table, record, and column.
+
+        Args:
+            table_name (str): The name of the table.
+            record_id (str): The ID of the record.
+            column_name (str): The name of the column.
+            **kwargs: Additional keyword arguments to be passed to the API.
+
+        Returns:
+            ApiResponse: The response from the API.
+
+        Raises:
+            XataServerError: If the API response is not successful.
+        """
 
         client = self.__call__(**self.client_kwargs)
-        response = client.files().get(f'{table_name}',record_id,column_name,**kwargs)
+        response = client.files().get(f'{table_name}', record_id, column_name, **kwargs)
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.server_message())
 
         return response
 
-    def get_file_from_array(self,table_name:str,record_id:str,column_name:str,file_id:str,**kwargs) -> ApiResponse:
+
+    def get_file_from_array(self, table_name: str, record_id: str, column_name: str, file_id: str, **kwargs) -> ApiResponse:
+        """
+        Retrieves file content from an array by file ID
+
+        Args:
+            table_name (str): The name of the table.
+            record_id (str): The ID of the record.
+            column_name (str): The name of the array column.
+            file_id (str): The ID of the file within the array.
+            **kwargs: Additional keyword arguments to be passed to the API.
+
+        Returns:
+            ApiResponse: The response from the API.
+
+        Raises:
+            XataServerError: If the API response is not successful.
+        """
 
         client = self.__call__(**self.client_kwargs)
-        response = client.files().get_item(f'{table_name}',record_id,column_name,file_id,**kwargs)
+        response = client.files().get_item(f'{table_name}', record_id, column_name, file_id, **kwargs)
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.server_message())
 
         return response
 
-    def delete_file(self,table_name:str,record_id:str,column_name:str,**kwargs) -> ApiResponse:
 
-        client = self.__call__(**self.client_kwargs)
-        response = client.files().delete(f'{table_name}',record_id,column_name,**kwargs)
+    def delete_file(self, table_name: str, record_id: str, column_name: str, **kwargs) -> ApiResponse:
+            """
+            Deletes a file from a specific table and record in the Xata database.
 
-        if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            Args:
+                table_name (str): The name of the table.
+                record_id (str): The ID of the record.
+                column_name (str): The name of the column where the file is stored.
+                **kwargs: Additional keyword arguments to be passed to the API.
 
-        return response
+            Returns:
+                ApiResponse: The response from the API.
+
+            Raises:
+                XataServerError: If the API response is not successful.
+            """
+
+            client = self.__call__(**self.client_kwargs)
+            response = client.files().delete(f'{table_name}', record_id, column_name, **kwargs)
+
+            if not response.is_success():
+                raise XataServerError(response.status_code, response.server_message())
+
+            return response
 
     def delete_file_from_array(self,table_name:str,record_id:str,column_name:str,file_id:str,**kwargs) -> ApiResponse:
+            """
+            Deletes a file from an array field in a record.
 
-        client = self.__call__(**self.client_kwargs)
-        response = client.files().delete_item(f'{table_name}',record_id,column_name,file_id,**kwargs)
-        if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            Args:
+                table_name (str): The name of the table.
+                record_id (str): The ID of the record.
+                column_name (str): The name of the array field.
+                file_id (str): The ID of the file to delete.
+                **kwargs: Additional keyword arguments to pass to the API.
 
-        return response
+            Returns:
+                ApiResponse: The API response.
 
-    def image_transform(self, image_url: str, transformations: dict, **kwargs) -> bytes:
+            Raises:
+                XataServerError: If the API response is not successful.
+            """
+
+            client = self.__call__(**self.client_kwargs)
+            response = client.files().delete_item(f'{table_name}',record_id,column_name,file_id,**kwargs)
+            if not response.is_success():
+                raise XataServerError(response.status_code,response.server_message())
+
+            return response
+
+    def image_transform(self, image_url: str, transformations: dict) -> bytes:
         """
         Transforms an image using the specified transformations.
 
         Args:
             image_url (str): The URL of the image to transform.
             transformations (dict): A dictionary containing the transformations to apply to the image.
-            **kwargs: Additional keyword arguments.
 
             Returns:
                 bytes: The transformed image data.
