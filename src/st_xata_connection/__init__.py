@@ -108,17 +108,16 @@ class XataConnection(BaseConnection[XataClient]):
             else:
                 raise ConnectionRefusedError("No API key found. Please set the XATA_API_KEY environment variable or add it to the secrets manager.")
 
-
+        #If the db_url is not provided, it will be neecessary to specify the database  name and the region  when calling the client
         if db_url is None:
             if "XATA_DB_URL" in self._secrets:
                 db_url = self._secrets["XATA_DB_URL"]
             elif "XATA_DB_URL" in os.environ:
-                #If the db_url is not provided, it will be neecessary to specify the database  name and the region on each query
+
                 db_url = os.environ.get("XATA_DB_URL")
             elif "XATA_DB_URL" in self.__secrets and self.__secrets["XATA_DB_URL"] is not None:
                 db_url = self.__secrets["XATA_DB_URL"]
-            else:
-                raise ConnectionRefusedError("No database URL found. Please set the XATA_DB_URL environment variable or add it to the secrets manager.")
+
         if db_url is None:
             return XataClient(api_key=api_key,**kwargs)
         else:
@@ -470,8 +469,10 @@ class XataConnection(BaseConnection[XataClient]):
         client = self._call_client(**self.client_kwargs)
         if rules is None:
             rules = []
+
         if options is None:
             options = {}
+
         response = client.data().ask(reference_table,question,rules=rules,options=options,**kwargs)
 
         if not response.is_success():
@@ -732,3 +733,11 @@ class XataConnection(BaseConnection[XataClient]):
             nextpage = None
 
         return nextpage
+
+
+    def get_schema(self , table_name: str, **kwargs) -> ApiResponse:
+        client = self._call_client(**self.client_kwargs)
+        response = client.table().get_schema(table_name, **kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code, response.server_message())
