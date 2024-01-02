@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import uuid
 from typing import Literal, Optional, Union,List,Dict,Tuple
 
 
@@ -10,6 +11,7 @@ from xata.helpers import to_rfc339,BulkProcessor,Transaction
 from xata.api_response import ApiResponse
 from xata.errors import XataServerError
 from datetime import datetime, timezone
+
 
 
 #BUG: It does not work with the cache_data decorator it does not allow to retrieve the data in real time
@@ -186,14 +188,13 @@ class XataConnection(BaseConnection[XataClient]):
                         setattr(self, alias, table_name)
                         setattr(self, table_name, self.get_schema(table_name))
 
-    def query(self, table_name: str, full_query: Optional[dict] = None, consistency: Optional[Literal['strong', 'eventual']] = None, **kwargs) -> ApiResponse:
+    def query(self, table_name: str, full_query: Optional[dict] = None, **kwargs) -> ApiResponse:
         """
         Executes a query on the specified table.
 
         Args:
             table_name (str): The name of the table to query.
             full_query (dict, optional): A dictionary containing additional query parameters. Defaults to None.
-            consistency (Literal['strong', 'eventual'], optional): The consistency level for the query. Defaults to None.
             **kwargs: Additional keyword arguments to be passed to the query.
 
         Returns:
@@ -204,75 +205,76 @@ class XataConnection(BaseConnection[XataClient]):
         """
 
         client = self.__call__(**self.client_kwargs)
-
-        if consistency is not None:
-            if full_query is None:
-                full_query = {'consistency': consistency}
-            else:
-                full_query['consistency'] = consistency
-
-        if full_query is None:
-            response = client.data().query(f'{table_name}', **kwargs)
-        else:
-            response = client.data().query(f'{table_name}', full_query, **kwargs)
+        response = client.data().query(f'{table_name}', full_query, **kwargs)
 
         if not response.is_success():
             raise XataServerError(response.status_code, response.server_message())
 
         return response
 
-    def get(self,table_name:str,record_id:str,**kwargs) -> ApiResponse:
+    def get(self, table_name: str, record_id: str, columns: Optional[list] = None, **kwargs) -> ApiResponse:
+            """
+            Retrieves a record from the specified table.
+
+            Args:
+                table_name (str): The name of the table.
+                record_id (str): The ID of the record to retrieve.
+                columns (Optional[list]): A list of column names to include in the response. Defaults to None.
+                **kwargs: Additional keyword arguments to pass to the API.
+
+            Returns:
+                ApiResponse: The response from the API.
+
+            Raises:
+                XataServerError: If the API response is not successful.
+            """
+
+            client = self.__call__(**self.client_kwargs)
+            response = client.records().get(f'{table_name}', record_id, columns=columns, **kwargs)
+
+            if not response.is_success():
+                raise XataServerError(response.status_code, response.server_message())
+
+            return response
+
+    def insert(self, table_name: str, record: dict, record_id: Optional[str] = None,
+               create_only: Optional[bool] = None, if_version: Optional[int] = None,
+               columns: Optional[list] = None, **kwargs) -> ApiResponse:
         """
-        The function `get_record` retrieves a record from a specified table using the provided record ID.
+        Inserts a record into the specified table.
 
-        :param table_name: The name of the table from which you want to retrieve the record
-        :type table_name: str
+        Args:
+            table_name (str): The name of the table.
+            record (dict): The record to be inserted.
+            record_id (str, optional): The ID of the record. If not provided, a new UUID will be generated.
+            create_only (bool, optional): If set to True, the record will only be created if it doesn't already exist.
+            if_version (int, optional): The version of the record to check before inserting. If provided, the record will only be inserted if the current version matches the specified version.
+            columns (list, optional): A list of column names to include in the insert operation.
+            **kwargs: Additional keyword arguments to be passed to the insert operation.
 
-        :param record_id: The `record_id` parameter is a string that represents the unique identifier of the record you want
-        to retrieve from the specified table
-        :type record_id: str
+        Returns:
+            ApiResponse: The response from the insert operation.
 
-        :return: an instance of the `ApiResponse` class.
+        Raises:
+            XataServerError: If the insert operation fails.
         """
-
         client = self.__call__(**self.client_kwargs)
-        response = client.records().get(f'{table_name}',record_id,**kwargs)
 
-        if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+        if record_id is not None and (create_only is not None or if_version is not None or columns is not None):
+            if record_id is None:
+                record_id = str(uuid.uuid4())
 
-        return response
-
-    def insert(self,table_name:str,record:dict,record_id:Optional[str]=None,**kwargs) -> ApiResponse:
-        """
-        The function inserts a record into a table with an optional record ID.
-
-        :param table_name: The name of the table where the record will be inserted
-        :type table_name: str
-
-        :param record: The `record` parameter is a dictionary that represents the data to be inserted into the table. Each
-        key-value pair in the dictionary represents a column name and its corresponding value in the record
-        :type record: dict
-
-        :param record_id: The `record_id` parameter is an optional parameter that specifies the unique identifier for the
-        record being inserted into the table. If a `record_id` is provided, the record will be inserted with that specific
-        identifier. If `record_id` is not provided, the system will generate a unique identifier for the record
-        :type record_id: Optional[str]
-
-        :return: an instance of the `ApiResponse` class.
-        """
-
-        client = self.__call__(**self.client_kwargs)
-
-        if record_id is not None:
-            response = client.records().insert_with_id(f'{table_name}',record_id,record,**kwargs)
+            response = client.records().insert_with_id(f'{table_name}', record_id, record,
+                                                       create_only=create_only, if_version=if_version,
+                                                       columns=columns, **kwargs)
         else:
-            response = client.records().insert(f'{table_name}',record,**kwargs)
+            response = client.records().insert(f'{table_name}', record, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.server_message())
 
         return response
+
 
     def replace(self,table_name:str,record_id:str,record:dict,**kwargs) -> ApiResponse:
         """
