@@ -202,6 +202,8 @@ class XataConnection(BaseConnection[XataClient]):
 
         Raises:
             XataServerError: If the query response is not successful.
+
+        For more information visit: https://xata.io/docs/sdk/get
         """
 
         client = self.__call__(**self.client_kwargs)
@@ -227,6 +229,8 @@ class XataConnection(BaseConnection[XataClient]):
 
             Raises:
                 XataServerError: If the API response is not successful.
+
+            For more information visit: https://xata.io/docs/sdk/get
         """
 
         client = self.__call__(**self.client_kwargs)
@@ -257,6 +261,8 @@ class XataConnection(BaseConnection[XataClient]):
 
         Raises:
             XataServerError: If the insert operation fails.
+
+        For more information visit: https://xata.io/docs/sdk/insert
         """
         client = self.__call__(**self.client_kwargs)
 
@@ -584,6 +590,8 @@ class XataConnection(BaseConnection[XataClient]):
 
         Raises:
             XataServerError: If the API response indicates an error.
+
+        For more information visit: https://xata.io/docs/sdk/insert
         """
 
         client = self.__call__(**self.client_kwargs)
