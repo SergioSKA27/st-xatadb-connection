@@ -767,21 +767,6 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
-    def fix_dates(self,payload:dict,time_zone:Optional[timezone]=timezone.utc,table_name:str='') -> dict:
-        client = self._call_client(**self.client_kwargs)
-        sch = DataFrame(client.table().get_schema(table_name))
-        sch = sch[sch['type'].isin(['date','datetime','string'])]
-
-        for col in sch['name']:
-            if isinstance(payload[col],datetime):
-                payload[col] = to_rfc339(payload[col],time_zone)
-            if re.match(r'^\d{4}-\d{2}-\d{2}$',payload[col]):
-                date_without_time = datetime.strptime(payload[col], "%Y-%m-%d")
-            elif re.match(r'^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$',payload[col]):
-                date_without_time = datetime.strptime(payload[col], "%Y-%m-%d %H:%M:%S")
-
-            payload[col] = to_rfc339(date_without_time,time_zone)
-
     def next_page(self, table_name: str, response_prev: ApiResponse,
                     pagesize: Optional[int] = 20,
                     offset: Optional[int] = None,
@@ -1038,3 +1023,19 @@ class XataConnection(BaseConnection[XataClient]):
                 BulkTransaction: The created BulkTransaction object.
             """
             return Transaction(self.__call__(**self.client_kwargs),**kwargs)
+
+
+    def fix_date(self,date:Union[str,datetime],time_zone:Optional[timezone]=timezone.utc) -> str:
+        """
+        The function `fix_date` takes in a date string or datetime object and returns a string in RFC3339 format.
+
+        :param date: The date parameter is a string or datetime object that represents the date you want to convert to
+        RFC3339 format
+        :type date: Union[str,datetime]
+
+        :return: a string in RFC3339 format.
+        """
+        if isinstance(date,str):
+            date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
+
+        return to_rfc339(date,time_zone)
