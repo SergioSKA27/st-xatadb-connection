@@ -60,7 +60,7 @@ class XataConnection(BaseConnection[XataClient]):
 
         insert: The function inserts a record into a table with an optional record ID.
 
-        replace: The function replaces a record in a table with a new record using the provided record ID and record data.
+        upsert: The function replaces a record in a table with a new record using the provided record ID and record data.
 
         update: The function updates a record in a specified table using the provided record ID and record data.
 
@@ -159,34 +159,34 @@ class XataConnection(BaseConnection[XataClient]):
 
 
     def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None,table_names:Optional[Union[list,dict]]=None,**kwargs) -> None:
+        """
+        Connects to the Xata database using the provided API key and database URL.
+
+         Args:
+            api_key (str, optional): The API key for accessing the Xata database. Defaults to None.
+            db_url (str, optional): The URL of the Xata database. Defaults to None.
+            table_names (list or dict, optional): The names of the tables in the database.
+                Can be a list of table names or a dictionary with table names as keys and aliases as values.
+                Defaults to None.
+            **kwargs: Additional keyword arguments to be passed to the XataClient constructor.
             """
-            Connects to the Xata database using the provided API key and database URL.
+        self.client_kwargs = kwargs
+        self._table_names = None
+        self.__secrets = {'XATA_API_KEY': api_key, 'XATA_DB_URL': db_url} # Not recommended  to pass the api_key and db_url as kwargs
 
-            Args:
-                api_key (str, optional): The API key for accessing the Xata database. Defaults to None.
-                db_url (str, optional): The URL of the Xata database. Defaults to None.
-                table_names (list or dict, optional): The names of the tables in the database.
-                    Can be a list of table names or a dictionary with table names as keys and aliases as values.
-                    Defaults to None.
-                **kwargs: Additional keyword arguments to be passed to the XataClient constructor.
-            """
-            self.client_kwargs = kwargs
-            self._table_names = None
-            self.__secrets = {'XATA_API_KEY': api_key, 'XATA_DB_URL': db_url} # Not recommended  to pass the api_key and db_url as kwargs
+        self.__call__(api_key=api_key,db_url=db_url,**kwargs) # Verify that the connection is working
+        self._call_client(api_key=api_key,db_url=db_url,**kwargs) # Verify that the connection is working
 
-            self.__call__(api_key=api_key,db_url=db_url,**kwargs) # Verify that the connection is working
-            self._call_client(api_key=api_key,db_url=db_url,**kwargs) # Verify that the connection is working
-
-            if table_names is None:
-                if isinstance(table_names,list):
-                    #this allows you to get the schema for all the tables in the database calling the attribute table_name
-                    for table_name in table_names:
-                        setattr(self, table_name, self.get_schema(table_name))
-                elif isinstance(table_names,dict):
-                    #This allows you to use aliases for the table names
-                    for table_name,alias in table_names.items():
-                        setattr(self, alias, table_name)
-                        setattr(self, table_name, self.get_schema(table_name))
+        if table_names is None:
+            if isinstance(table_names,list):
+                #this allows you to get the schema for all the tables in the database calling the attribute table_name
+                for table_name in table_names:
+                    setattr(self, table_name, self.get_schema(table_name))
+            elif isinstance(table_names,dict):
+                #This allows you to use aliases for the table names
+                for table_name,alias in table_names.items():
+                    setattr(self, alias, table_name)
+                    setattr(self, table_name, self.get_schema(table_name))
 
     def query(self, table_name: str, full_query: Optional[dict] = None, **kwargs) -> ApiResponse:
         """
@@ -213,7 +213,7 @@ class XataConnection(BaseConnection[XataClient]):
         return response
 
     def get(self, table_name: str, record_id: str, columns: Optional[list] = None, **kwargs) -> ApiResponse:
-            """
+        """
             Retrieves a record from the specified table.
 
             Args:
@@ -227,15 +227,15 @@ class XataConnection(BaseConnection[XataClient]):
 
             Raises:
                 XataServerError: If the API response is not successful.
-            """
+        """
 
-            client = self.__call__(**self.client_kwargs)
-            response = client.records().get(f'{table_name}', record_id, columns=columns, **kwargs)
+        client = self.__call__(**self.client_kwargs)
+        response = client.records().get(f'{table_name}', record_id, columns=columns, **kwargs)
 
-            if not response.is_success():
-                raise XataServerError(response.status_code, response.server_message())
+        if not response.is_success():
+            raise XataServerError(response.status_code, response.server_message())
 
-            return response
+        return response
 
     def insert(self, table_name: str, record: dict, record_id: Optional[str] = None,
                create_only: Optional[bool] = None, if_version: Optional[int] = None,
@@ -275,31 +275,32 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
-
-    def replace(self,table_name:str,record_id:str,record:dict,**kwargs) -> ApiResponse:
+    def upsert(self, table_name: str, record_id: str, record: dict,
+                    if_version: Optional[int] = None, columns: Optional[list] = None,
+                    **kwargs) -> ApiResponse:
         """
-        The function replaces a record in a table with a new record using the provided record ID and record data.
+            Upserts a record into the specified table.
 
-        :param table_name: The name of the table where the record will be replaced
-        :type table_name: str
+            Args:
+                table_name (str): The name of the table.
+                record_id (str): The ID of the record.
+                record (dict): The record data to upsert.
+                if_version (Optional[int], optional): The version of the record to check before upserting. Defaults to None.
+                columns (Optional[list], optional): The list of columns to include in the upsert. Defaults to None.
+                **kwargs: Additional keyword arguments to pass to the upsert method.
 
-        :param record_id: The `record_id` parameter is a string that represents the unique identifier of the record in the
-        table
-        :type record_id: str
+            Returns:
+                ApiResponse: The response from the upsert operation.
 
-        :param record: The `record` parameter is a dictionary that contains the data to be updated or inserted into the
-        table. It should have key-value pairs where the keys represent the column names in the table and the values
-        represent the new values for those columns
-        :type record: dict
-
-        :return: an instance of the `ApiResponse` class.
-        """
+            Raises:
+                XataServerError: If the upsert operation is not successful.
+            """
 
         client = self.__call__(**self.client_kwargs)
-        response = client.records().upsert(f'{table_name}',record_id,record,**kwargs)
+        response = client.records().upsert(f'{table_name}', record_id, record, columns=columns, if_version=if_version, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.server_message())
 
         return response
 
@@ -673,7 +674,6 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
-
     def get_file_from_array(self, table_name: str, record_id: str, column_name: str, file_id: str, **kwargs) -> ApiResponse:
         """
         Retrieves file content from an array by file ID
@@ -698,7 +698,6 @@ class XataConnection(BaseConnection[XataClient]):
             raise XataServerError(response.status_code, response.server_message())
 
         return response
-
 
     def delete_file(self, table_name: str, record_id: str, column_name: str, **kwargs) -> ApiResponse:
             """
@@ -1023,7 +1022,6 @@ class XataConnection(BaseConnection[XataClient]):
                 BulkTransaction: The created BulkTransaction object.
             """
             return Transaction(self.__call__(**self.client_kwargs),**kwargs)
-
 
     def fix_date(self,date:Union[str,datetime],time_zone:Optional[timezone]=timezone.utc) -> str:
         """
