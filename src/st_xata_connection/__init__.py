@@ -176,25 +176,12 @@ class XataConnection(BaseConnection[XataClient]):
          Args:
             api_key (str, optional): The API key for accessing the Xata database. Defaults to None.
             db_url (str, optional): The URL of the Xata database. Defaults to None.
-            table_names (list optional): The names of the tables in the database.
-            Defaults to None.
-            alias (dict, optional): A dictionary containing table names as keys and aliases as values.
-            Defaults to None.
             **kwargs: Additional keyword arguments to be passed to the XataClient constructor.
             """
         self.client_kwargs = kwargs
         self.__secrets = {'XATA_API_KEY': api_key, 'XATA_DB_URL': db_url} # Not recommended  to pass the api_key and db_url as kwargs
 
         self._call_client(api_key=api_key,db_url=db_url,**kwargs) # Verify that the connection is working
-
-        if table_names is None:
-                # This allows you to get the schema for all the tables in the database calling the attribute table_name
-            for table_name in table_names:
-                setattr(self, table_name, self.get_schema(table_name))
-
-        if alias is not None:
-                for table_name,alias in table_names.items():
-                    setattr(self, alias, table_name)
 
     def query(self, table_name: str, full_query: Optional[dict] = None, **kwargs) -> ApiResponse:
         """
@@ -841,7 +828,7 @@ class XataConnection(BaseConnection[XataClient]):
                         limit: Optional[int] = None,
                         consistency: Optional[Literal['strong', 'eventual']] = None,
                         **kwargs) -> Union[ApiResponse, None]:
-            """
+        """
             Retrieves the previous page of results from the specified table.
 
             Args:
@@ -857,29 +844,30 @@ class XataConnection(BaseConnection[XataClient]):
             Returns:
                 Union[ApiResponse, None]: The response object representing the previous page of results,
                 or None if there are no more results.
-            """
+        """
 
-            client = self._call_client(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
 
-            _next = {'size': pagesize, 'before': response_after.get_cursor()}
-            if offset is not None:
-                _next['offset'] = offset
+        _next = {'size': pagesize, 'before': response_after.get_cursor()}
 
-            if limit is not None:
-                _next['limit'] = limit
+        if offset is not None:
+            _next['offset'] = offset
 
-            if consistency is not None:
-                _next['consistency'] = consistency
+        if limit is not None:
+            _next['limit'] = limit
 
-            if response_after.has_more_results():
-                nextpage = client.data().query(f'{table_name}', {'page': _next}, **kwargs)
+        if consistency is not None:
+            _next['consistency'] = consistency
 
-                if not nextpage.is_success():
-                    raise XataServerError(nextpage.status_code, nextpage.server_message())
-            else:
-                nextpage = None
+        if response_after.has_more_results():
+            nextpage = client.data().query(f'{table_name}', {'page': _next}, **kwargs)
 
-            return nextpage
+            if not nextpage.is_success():
+                raise XataServerError(nextpage.status_code, nextpage.server_message())
+        else:
+            nextpage = None
+
+        return nextpage
 
     def get_schema(self , table_name: str, **kwargs) -> ApiResponse:
             """
