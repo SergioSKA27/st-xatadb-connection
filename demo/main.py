@@ -1,5 +1,7 @@
 import streamlit as st
-from src.st_xatadb_connection import XataConnection
+from st_xatadb_connection import XataConnection
+
+
 
 
 st.title('Demo Xata Connection')
@@ -8,7 +10,7 @@ xata = st.connection('xata',type=XataConnection)
 
 st.code('''
 import streamlit as st
-from src.st_xata_connection import XataConnection
+from st_xatadb_connection import XataConnection
 
 # Create a connection to your Xata database
 xata = st.connection('xata',type=XataConnection)

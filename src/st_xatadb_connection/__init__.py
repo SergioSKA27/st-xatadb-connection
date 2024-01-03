@@ -17,7 +17,7 @@ from xata.errors import XataServerError
 #By: Sergio Demis Lopez Martinez
 
 
-__version__ = "1.0.0"
+__version__ = "1.0.1"
 
 __all__ = ["XataConnection"]
 
@@ -35,13 +35,13 @@ class XataConnection(BaseConnection[XataClient]):
     Usage:
     ------
     ```python
-    from xata_db_connection import XataDBConnection
+    from st_xatadb_connection import XataConnection
 
     # Create a connection to the Xata database
     xata_connection = st.connection('xata', type=XataConnection)
 
     # Example: Execute a query
-    result = xata_connection.query('example_table)
+    result = xata_connection.query('example_table')
     print(result)
     ```
 
