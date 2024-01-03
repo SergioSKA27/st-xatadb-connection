@@ -14,8 +14,8 @@ def get_version(rel_path):
     raise RuntimeError("Unable to find version string.")
 
 setup(
-    name = "st_xata_connection",
-    version = get_version("src/st_xata_connection/__init__.py"),
+    name = "st_xatadb_connection",
+    version = get_version("src/st_xatadb_connection/__init__.py"),
     author = "Sergio Demis Lopez Martinez",
     author_email = "sergioska81@hotmail.com",
     description = ("Streamlit Xata Data Base Connection"

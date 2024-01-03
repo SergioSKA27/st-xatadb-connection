@@ -1,5 +1,5 @@
 import streamlit as st
-from src.st_xata_connection import XataConnection
+from src.st_xatadb_connection import XataConnection
 
 
 st.title('Demo Xata Connection')
