@@ -62,7 +62,7 @@ class XataConnection(BaseConnection[XataClient]):
     methods:
         __init__: The above function is a constructor that initializes an object with an optional connection name parameter.
 
-        __call__: This method is used to create an instance of the XataClient class.
+        _call_client: This method is used to create an instance of the XataClient class.
 
         _connect: Connects to the Xata database using the provided API key and database URL.
 
@@ -129,7 +129,7 @@ class XataConnection(BaseConnection[XataClient]):
         """
         super().__init__(connection_name,**kwargs)
 
-    def __call__(self,api_key:Optional[str]=None,db_url:Optional[str]=None,**kwargs) -> XataClient:
+    def _call_client(self,api_key:Optional[str]=None,db_url:Optional[str]=None,**kwargs) -> XataClient:
             """
             This method is used to create an instance of the XataClient class.
 
@@ -168,35 +168,33 @@ class XataConnection(BaseConnection[XataClient]):
             else:
                 return XataClient(api_key=api_key,db_url=db_url,**kwargs)
 
-    def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None,table_names:Optional[Union[list,dict]]=None,**kwargs) -> None:
+    def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None,
+                table_names:Optional[list]=None,alias:Optional[dict]=None,**kwargs) -> None:
         """
         Connects to the Xata database using the provided API key and database URL.
 
          Args:
             api_key (str, optional): The API key for accessing the Xata database. Defaults to None.
             db_url (str, optional): The URL of the Xata database. Defaults to None.
-            table_names (list or dict, optional): The names of the tables in the database.
-                Can be a list of table names or a dictionary with table names as keys and aliases as values.
-                Defaults to None.
+            table_names (list optional): The names of the tables in the database.
+            Defaults to None.
+            alias (dict, optional): A dictionary containing table names as keys and aliases as values.
+            Defaults to None.
             **kwargs: Additional keyword arguments to be passed to the XataClient constructor.
             """
         self.client_kwargs = kwargs
-        self._table_names = None
         self.__secrets = {'XATA_API_KEY': api_key, 'XATA_DB_URL': db_url} # Not recommended  to pass the api_key and db_url as kwargs
 
-        self.__call__(api_key=api_key,db_url=db_url,**kwargs) # Verify that the connection is working
         self._call_client(api_key=api_key,db_url=db_url,**kwargs) # Verify that the connection is working
 
         if table_names is None:
-            if isinstance(table_names,list):
                 # This allows you to get the schema for all the tables in the database calling the attribute table_name
-                for table_name in table_names:
-                    setattr(self, table_name, self.get_schema(table_name))
-            elif isinstance(table_names,dict):
-                #This allows you to use aliases for the table names
+            for table_name in table_names:
+                setattr(self, table_name, self.get_schema(table_name))
+
+        if alias is not None:
                 for table_name,alias in table_names.items():
                     setattr(self, alias, table_name)
-                    setattr(self, table_name, self.get_schema(table_name))
 
     def query(self, table_name: str, full_query: Optional[dict] = None, **kwargs) -> ApiResponse:
         """
@@ -216,7 +214,7 @@ class XataConnection(BaseConnection[XataClient]):
         For more information visit: https://xata.io/docs/sdk/get
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.data().query(f'{table_name}', full_query, **kwargs)
 
         if not response.is_success():
@@ -243,7 +241,7 @@ class XataConnection(BaseConnection[XataClient]):
             For more information visit: https://xata.io/docs/sdk/get
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.records().get(f'{table_name}', record_id, columns=columns, **kwargs)
 
         if not response.is_success():
@@ -274,7 +272,7 @@ class XataConnection(BaseConnection[XataClient]):
 
         For more information visit: https://xata.io/docs/sdk/insert
         """
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
 
         if record_id is not None and (create_only is not None or if_version is not None or columns is not None):
             if record_id is None:
@@ -312,7 +310,7 @@ class XataConnection(BaseConnection[XataClient]):
                 XataServerError: If the upsert operation is not successful.
             """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.records().upsert(f'{table_name}', record_id, record, columns=columns, if_version=if_version, **kwargs)
 
         if not response.is_success():
@@ -341,7 +339,7 @@ class XataConnection(BaseConnection[XataClient]):
                 XataServerError: If the update operation is not successful.
             """
 
-            client = self.__call__(**self.client_kwargs)
+            client = self._call_client(**self.client_kwargs)
             response = client.records().update(f'{table_name}',record_id,record,if_version=if_version,column_names=column_names,**kwargs)
 
             if not response.is_success():
@@ -366,7 +364,7 @@ class XataConnection(BaseConnection[XataClient]):
                 XataServerError: If the delete operation is not successful.
             """
 
-            client = self.__call__(**self.client_kwargs)
+            client = self._call_client(**self.client_kwargs)
             response = client.records().delete(f'{table_name}', record_id, columns=columns, **kwargs)
 
             if not response.is_success():
@@ -384,7 +382,7 @@ class XataConnection(BaseConnection[XataClient]):
         :return: an ApiResponse object.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.data().search_branch(search_query,**kwargs)
 
         if not response.is_success():
@@ -407,7 +405,7 @@ class XataConnection(BaseConnection[XataClient]):
         :return: an ApiResponse object.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.data().search_table(f'{table_name}',search_query,**kwargs)
 
         if not response.is_success():
@@ -430,7 +428,7 @@ class XataConnection(BaseConnection[XataClient]):
         :return: an ApiResponse object.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.data().vector_search(f'{table_name}',search_query,**kwargs)
 
         if not response.is_success():
@@ -452,7 +450,7 @@ class XataConnection(BaseConnection[XataClient]):
         :return: an ApiResponse object.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.data().aggregate(f'{table_name}',aggregate_query,**kwargs)
 
         if not response.is_success():
@@ -476,7 +474,7 @@ class XataConnection(BaseConnection[XataClient]):
         :return: an ApiResponse object.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.data().summarize(f'{table_name}',summarize_query,**kwargs)
 
         if not response.is_success():
@@ -499,7 +497,7 @@ class XataConnection(BaseConnection[XataClient]):
         else:
             payl = payload
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.records().transaction(payl,**kwargs)
 
         if not response.is_success():
@@ -523,7 +521,7 @@ class XataConnection(BaseConnection[XataClient]):
                 XataServerError: If the query execution is not successful.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.sql().query(query, params, consistency=consistency, **kwargs)
 
         if not response.is_success():
@@ -551,7 +549,7 @@ class XataConnection(BaseConnection[XataClient]):
         Raises:
             XataServerError: If the response from the Xata AI service is not successful.
         """
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         if rules is None:
             rules = []
 
@@ -586,7 +584,7 @@ class XataConnection(BaseConnection[XataClient]):
                 XataServerError: If the API response is not successful.
             """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.data().ask_follow_up(reference_table, chatsessionid, question,
                                                    streaming_results=streaming_results, **kwargs)
 
@@ -613,7 +611,7 @@ class XataConnection(BaseConnection[XataClient]):
         For more information visit: https://xata.io/docs/sdk/insert
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.records().bulk_insert(f'{table_name}', {'records': records}, **kwargs)
 
         if not response.is_success():
@@ -642,7 +640,7 @@ class XataConnection(BaseConnection[XataClient]):
             XataServerError: If the API response is not successful.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.files().put(f'{table_name}',record_id,column_name,file_content,content_type,**kwargs)
 
         if not response.is_success():
@@ -671,7 +669,7 @@ class XataConnection(BaseConnection[XataClient]):
             XataServerError: If the API response is not successful.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.files().put_item(f'{table_name}',record_id,column_name,file_id,file_content,content_type,**kwargs)
 
         if not response.is_success():
@@ -696,7 +694,7 @@ class XataConnection(BaseConnection[XataClient]):
             XataServerError: If the API response is not successful.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.files().get(f'{table_name}', record_id, column_name, **kwargs)
         if not response.is_success():
             raise XataServerError(response.status_code, response.server_message())
@@ -721,7 +719,7 @@ class XataConnection(BaseConnection[XataClient]):
             XataServerError: If the API response is not successful.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.files().get_item(f'{table_name}', record_id, column_name, file_id, **kwargs)
         if not response.is_success():
             raise XataServerError(response.status_code, response.server_message())
@@ -745,7 +743,7 @@ class XataConnection(BaseConnection[XataClient]):
                 XataServerError: If the API response is not successful.
             """
 
-            client = self.__call__(**self.client_kwargs)
+            client = self._call_client(**self.client_kwargs)
             response = client.files().delete(f'{table_name}', record_id, column_name, **kwargs)
 
             if not response.is_success():
@@ -771,7 +769,7 @@ class XataConnection(BaseConnection[XataClient]):
                 XataServerError: If the API response is not successful.
             """
 
-            client = self.__call__(**self.client_kwargs)
+            client = self._call_client(**self.client_kwargs)
             response = client.files().delete_item(f'{table_name}',record_id,column_name,file_id,**kwargs)
             if not response.is_success():
                 raise XataServerError(response.status_code,response.server_message())
@@ -790,7 +788,7 @@ class XataConnection(BaseConnection[XataClient]):
                 bytes: The transformed image data.
 
         """
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.files().transform(image_url, transformations)
 
         return response
@@ -815,7 +813,7 @@ class XataConnection(BaseConnection[XataClient]):
         Returns:
             Union[ApiResponse, None]: The next page of results as an ApiResponse object, or None if there are no more results.
         """
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
 
         _next = {'size': pagesize, 'after': response_prev.get_cursor()}
         if offset is not None:
@@ -861,7 +859,7 @@ class XataConnection(BaseConnection[XataClient]):
                 or None if there are no more results.
             """
 
-            client = self.__call__(**self.client_kwargs)
+            client = self._call_client(**self.client_kwargs)
 
             _next = {'size': pagesize, 'before': response_after.get_cursor()}
             if offset is not None:
@@ -897,7 +895,7 @@ class XataConnection(BaseConnection[XataClient]):
             Raises:
                 XataServerError: If the response from the Xata client is not successful.
             """
-            client = self.__call__(**self.client_kwargs)
+            client = self._call_client(**self.client_kwargs)
             response = client.table().get_schema(table_name, **kwargs)
 
             if not response.is_success():
@@ -920,7 +918,7 @@ class XataConnection(BaseConnection[XataClient]):
             Raises:
                 XataServerError: If the table creation or schema setting fails.
             """
-            client = self.__call__(**self.client_kwargs)
+            client = self._call_client(**self.client_kwargs)
 
             response1 = client.table().create(table_name, **kwargs)
 
@@ -948,7 +946,7 @@ class XataConnection(BaseConnection[XataClient]):
             Raises:
                 XataServerError: If the table deletion fails.
             """
-            client = self.__call__(**self.client_kwargs)
+            client = self._call_client(**self.client_kwargs)
             response = client.table().delete(table_name, **kwargs)
 
             if not response.is_success():
@@ -972,7 +970,7 @@ class XataConnection(BaseConnection[XataClient]):
             XataServerError: If the API response indicates an error.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.table().add_column(table_name, column_config, **kwargs)
 
         if not response.is_success():
@@ -996,7 +994,7 @@ class XataConnection(BaseConnection[XataClient]):
             XataServerError: If the API response indicates an error.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.table().delete_column(table_name, column_name, **kwargs)
 
         if not response.is_success():
@@ -1019,7 +1017,7 @@ class XataConnection(BaseConnection[XataClient]):
             XataServerError: If the API response indicates an error.
         """
 
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = client.table().get_columns(table_name, **kwargs)
 
         if not response.is_success():
@@ -1038,7 +1036,7 @@ class XataConnection(BaseConnection[XataClient]):
             Returns:
                 BulkProcessor: The created BulkProcessor object.
             """
-            return BulkProcessor(self.__call__(**self.client_kwargs),**kwargs)
+            return BulkProcessor(self._call_client(**self.client_kwargs),**kwargs)
 
     def bulk_transaction(self,**kwargs) -> Transaction:
             """
@@ -1051,7 +1049,7 @@ class XataConnection(BaseConnection[XataClient]):
             Returns:
                 BulkTransaction: The created BulkTransaction object.
             """
-            return Transaction(self.__call__(**self.client_kwargs),**kwargs)
+            return Transaction(self._call_client(**self.client_kwargs),**kwargs)
 
     def fix_date(self,date:Union[str,datetime],time_zone:Optional[timezone]=timezone.utc) -> str:
         """
@@ -1095,7 +1093,7 @@ class XataConnection(BaseConnection[XataClient]):
 
         :return: an ApiResponse object.
         """
-        client = self.__call__(**self.client_kwargs)
+        client = self._call_client(**self.client_kwargs)
         response = ApiRequest(client).request(method,url,headers=headers,payload=payload,data=data,is_streaming=is_streaming)
 
         if not response.is_success():
