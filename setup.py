@@ -1,9 +1,8 @@
-import os
 from setuptools import setup, find_packages
 
 
-def read(fname):
-    return open(os.path.join(os.path.dirname(__file__), fname)).read()
+def read():
+    return open('README.md').read()
 
 setup(
     name = "st_xata_connection",
@@ -16,7 +15,7 @@ setup(
     keywords = "streamlit connection xata database",
     url = "http://packages.python.org/an_example_pypi_project",
     packages=find_packages(where='src'),
-    long_description=read('README'),
+    long_description=read(),
     long_description_content_type="text/markdown",
     classifiers=[
         "Environment :: Plugins",
