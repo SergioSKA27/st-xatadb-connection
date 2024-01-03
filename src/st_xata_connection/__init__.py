@@ -14,15 +14,18 @@ from datetime import datetime, timezone
 
 
 
-#BUG: It does not work with the cache_data decorator it does not allow to retrieve the data in real time
+#Note: It does not work with the cache_data decorator it does not allow to retrieve the data in real time
 #when the data is updated in the database you try to retrieve the data with the cache_data decorator it retrieves the
 #data from the cache and not from the database so you can not see the changes in real time.
 #Use the cache_data decorator only when you want to retrieve data that does not change frequently.
+
 #from streamlit.runtime.caching import cache_data
 #By: Sergio Demis Lopez Martinez
+
+
 __version__ = "1.0.0"
 
-
+__all__ = ["XataConnection"]
 
 
 
@@ -49,7 +52,10 @@ class XataConnection(BaseConnection[XataClient]):
         :type _secrets: dict
 
         _table_names: The `_table_names` attribute is a list that contains the names of the tables in the database.
-        It is used to store the names of the tables in the database so that they can be retrieved later.
+        It is used to store the names of the tables in the database so that they can be retrieved later.And it also
+        allows you to get the schema for all the tables in the database calling the attribute table_name. You can also
+        pass a dictionary with table names as keys and aliases as values to use aliases for the table names.
+
         :type _table_names: list
 
     methods:
@@ -110,9 +116,6 @@ class XataConnection(BaseConnection[XataClient]):
         prev_page: Retrieves the previous page of results from the specified table.
 
         get_schema: Retrieves the schema of a table from the Xata database.
-
-
-
     """
 
     def __init__(self,connection_name:Optional[str]='xata',**kwargs):
@@ -164,7 +167,6 @@ class XataConnection(BaseConnection[XataClient]):
             else:
                 return XataClient(api_key=api_key,db_url=db_url,**kwargs)
 
-
     def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None,table_names:Optional[Union[list,dict]]=None,**kwargs) -> None:
         """
         Connects to the Xata database using the provided API key and database URL.
@@ -186,7 +188,7 @@ class XataConnection(BaseConnection[XataClient]):
 
         if table_names is None:
             if isinstance(table_names,list):
-                #this allows you to get the schema for all the tables in the database calling the attribute table_name
+                # This allows you to get the schema for all the tables in the database calling the attribute table_name
                 for table_name in table_names:
                     setattr(self, table_name, self.get_schema(table_name))
             elif isinstance(table_names,dict):
@@ -619,7 +621,7 @@ class XataConnection(BaseConnection[XataClient]):
         return response
 
     def upload_file(self,table_name:str,record_id:str,
-                column_name:str,file_content:Union[str,bytes],
+                column_name:str,file_content: bytes,
                 content_type:Optional[str]='application/octet-stream',**kwargs) -> ApiResponse:
         """
         Uploads a file to the specified table, record, and column in the XataDB database.
@@ -647,7 +649,9 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
-    def append_file_to_array(self,table_name:str,record_id:str,column_name:str,file_id: str,file_content:Union[str,bytes],**kwargs) -> ApiResponse:
+    def append_file_to_array(self,table_name:str,record_id:str,column_name:str,
+                            file_id: str,file_content:bytes,
+                            content_type:Optional[str]='application/octet-stream',**kwargs) -> ApiResponse:
         """
         Appends a file to a specific column in a record of a table.
 
@@ -667,7 +671,7 @@ class XataConnection(BaseConnection[XataClient]):
         """
 
         client = self.__call__(**self.client_kwargs)
-        response = client.files().put_item(f'{table_name}',record_id,column_name,file_id,file_content,**kwargs)
+        response = client.files().put_item(f'{table_name}',record_id,column_name,file_id,file_content,content_type,**kwargs)
 
         if not response.is_success():
             raise XataServerError(response.status_code,response.server_message())
