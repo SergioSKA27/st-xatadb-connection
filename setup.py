@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup
 
 
 def read():
@@ -14,7 +14,7 @@ setup(
     license = "MIT",
     keywords = "streamlit connection xata database",
     url = "http://packages.python.org/an_example_pypi_project",
-    packages='src/st_xata_connection',
+    packages='st_xata_connection',
     long_description=read(),
     long_description_content_type="text/markdown",
     classifiers=[
