@@ -7,11 +7,11 @@ from typing import Literal, Optional, Union,List,Dict,Tuple
 
 from streamlit.connections import BaseConnection
 from xata.client import XataClient
-from xata.helpers import to_rfc339,BulkProcessor,Transaction
+from xata.helpers import BulkProcessor,Transaction
 from xata.api_response import ApiResponse
 from xata.api_request import ApiRequest
 from xata.errors import XataServerError
-from datetime import datetime, timezone
+
 
 
 
@@ -305,7 +305,7 @@ class XataConnection(BaseConnection[XataClient]):
         return response
 
     def update(self,table_name:str,record_id:str,
-                    record:dict,if_version:Optional[int]=None,column_names:Optional[list]=None,
+                    record:dict,if_version:Optional[int]=None,columns:Optional[list]=None,
                     **kwargs) -> ApiResponse:
             """
             Updates a record in the specified table.
@@ -315,7 +315,7 @@ class XataConnection(BaseConnection[XataClient]):
                 record_id (str): The ID of the record to update.
                 record (dict): The updated record data.
                 if_version (Optional[int]): The version of the record to update (optional).
-                column_names (Optional[list]): The names of the columns to update (optional).
+                columns (Optional[list]): The names of the columns to update (optional).
                 **kwargs: Additional keyword arguments to pass to the update method.
 
             Returns:
@@ -326,7 +326,7 @@ class XataConnection(BaseConnection[XataClient]):
             """
 
             client = self._call_client(**self.client_kwargs)
-            response = client.records().update(f'{table_name}',record_id,record,if_version=if_version,column_names=column_names,**kwargs)
+            response = client.records().update(f'{table_name}',record_id,record,if_version=if_version,columns=columns,**kwargs)
 
             if not response.is_success():
                 raise XataServerError(response.status_code,response.server_message())
@@ -1037,21 +1037,6 @@ class XataConnection(BaseConnection[XataClient]):
                 BulkTransaction: The created BulkTransaction object.
             """
             return Transaction(self._call_client(**self.client_kwargs),**kwargs)
-
-    def fix_date(self,date:Union[str,datetime],time_zone:Optional[timezone]=timezone.utc) -> str:
-        """
-        The function `fix_date` takes in a date string or datetime object and returns a string in RFC3339 format.
-
-        :param date: The date parameter is a string or datetime object that represents the date you want to convert to
-        RFC3339 format
-        :type date: Union[str,datetime]
-
-        :return: a string in RFC3339 format.
-        """
-        if isinstance(date,str):
-            date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
-
-        return to_rfc339(date,time_zone)
 
     def api_request(self,method:str,url:str,payload: dict=None,
                     data: bytes=None,headers: dict=None,
