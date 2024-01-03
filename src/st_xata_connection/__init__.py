@@ -13,13 +13,6 @@ from xata.api_request import ApiRequest
 from xata.errors import XataServerError
 
 
-
-
-#Note: It does not work with the cache_data decorator it does not allow to retrieve the data in real time
-#when the data is updated in the database you try to retrieve the data with the cache_data decorator it retrieves the
-#data from the cache and not from the database so you can not see the changes in real time.
-#Use the cache_data decorator only when you want to retrieve data that does not change frequently.
-
 #from streamlit.runtime.caching import cache_data
 #By: Sergio Demis Lopez Martinez
 
