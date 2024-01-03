@@ -31,6 +31,7 @@ class XataConnection(BaseConnection[XataClient]):
     =====================================
 
     The `XataConnection` class represents a connection to a Xata database. It provides methods to connect to the database and perform various operations.
+    github repo: https://github.com/SergioSKA27/st-xatadb-connection
 
     Usage:
     ------
