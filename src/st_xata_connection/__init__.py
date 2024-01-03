@@ -168,8 +168,7 @@ class XataConnection(BaseConnection[XataClient]):
             else:
                 return XataClient(api_key=api_key,db_url=db_url,**kwargs)
 
-    def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None,
-                table_names:Optional[list]=None,alias:Optional[dict]=None,**kwargs) -> None:
+    def _connect(self,api_key:Optional[str]=None,db_url:Optional[str]=None,**kwargs) -> None:
         """
         Connects to the Xata database using the provided API key and database URL.
 
