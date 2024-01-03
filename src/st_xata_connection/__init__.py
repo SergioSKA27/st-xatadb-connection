@@ -9,6 +9,7 @@ from streamlit.connections import BaseConnection
 from xata.client import XataClient
 from xata.helpers import to_rfc339,BulkProcessor,Transaction
 from xata.api_response import ApiResponse
+from xata.api_request import ApiRequest
 from xata.errors import XataServerError
 from datetime import datetime, timezone
 
@@ -1066,3 +1067,38 @@ class XataConnection(BaseConnection[XataClient]):
             date = datetime.strptime(date, "%Y-%m-%d %H:%M:%S")
 
         return to_rfc339(date,time_zone)
+
+    def api_request(self,method:str,url:str,payload: dict=None,
+                    data: bytes=None,headers: dict=None,
+                    is_streaming: bool=False) -> ApiResponse:
+        """
+        The function `api_request` takes in a method and a url and returns the response from the API.
+
+        :param method: The method parameter is a string that represents the HTTP method to use for the request. It can be
+        one of the following values: GET, POST, PUT, PATCH, DELETE
+        :type method: str
+
+        :param url: The url parameter is a string that represents the URL of the API endpoint
+        :type url: str
+
+        :param payload: The payload parameter is a dictionary that contains the data to be sent with the request
+        :type payload: dict
+
+        :param data: The data parameter is a bytes object that represents the data to be sent with the request
+        :type data: bytes
+
+        :param headers: The headers parameter is a dictionary that contains the headers to be sent with the request
+        :type headers: dict
+
+        :param is_streaming: The is_streaming parameter is a boolean value that indicates whether the request should be
+        :type is_streaming: bool
+
+        :return: an ApiResponse object.
+        """
+        client = self.__call__(**self.client_kwargs)
+        response = ApiRequest(client).request(method,url,headers=headers,payload=payload,data=data,is_streaming=is_streaming)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code,response.server_message())
+
+        return response
