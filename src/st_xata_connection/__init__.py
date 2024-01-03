@@ -117,6 +117,23 @@ class XataConnection(BaseConnection[XataClient]):
         prev_page: Retrieves the previous page of results from the specified table.
 
         get_schema: Retrieves the schema of a table from the Xata database.
+
+        create_table: Creates a new table in the Xata database.
+
+        delete_table: Deletes a table from the Xata database.
+
+        ceate_column: Creates a new column in a table in the Xata database.
+
+        delete_column: Deletes a column from a table in the Xata database.
+
+        get_columns: Retrieves the columns of a table from the Xata database.
+
+        bulk_processor: Creates a new bulk processor for the Xata database.
+
+        bulk_transaction: Creates a new bulk transaction for the Xata database.
+
+        api_request: Creates a new API request for the Xata database.
+
     """
 
     def __init__(self,connection_name:Optional[str]='xata',**kwargs):
