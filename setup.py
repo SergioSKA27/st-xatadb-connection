@@ -22,8 +22,9 @@ setup(
                                    "An easy way to connect your Streamlit application to your Xata database."),
     license = "MIT",
     keywords=["streamlit", "xata", "connection", "integration", "database"],
-    url = "http://packages.python.org/an_example_pypi_project",
-    packages=find_packages(where="src/st_xatadb_connection"),
+    url = "https://github.com/SergioSKA27/st-xatadb-connection",
+    packages=find_packages(where="src"),
+    package_dir={"": "src"},
     long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=[
@@ -39,6 +40,6 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Software Development :: User Interfaces",
     ],
-    install_requires=['streamlit>=1.28','pandas','xata'],
+    install_requires=['streamlit>=1.28','xata'],
 )
 

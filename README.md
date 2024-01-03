@@ -1,11 +1,19 @@
-
 # st-xatadb-connection
 
-Xata Data Base Connection Streamlit
+## Xata Data Base Connection Streamlit
+
+In the realm of web development, the combination of Xata and Streamlit is nothing short of a dream team.
+Xata,with its schemaless relational SQL database and simple REST API, provides a flexible and scalable foundation for storing and managing data.
+ Streamlit, on the other hand, is an open-source framework that empowers developers to create
+interactive web applications with minimal effort. Together, they form a synergistic partnership that unlocks a world of possibilities for building sophisticated web applications.
 
 ---
 
-# Getting Started with st_xata_connection
+To further enhance the synergy between Xata and Streamlit, I've created the st_xatadb_connection package.
+This package provides a seamless bridge between the two tools, making it incredibly easy to connect your Streamlit application to your Xata database.With just a few lines of code, you can perform CRUD operations (create, retrieve, update, delete) on your Xata data, generate reports and visualizations, and even interact with your data in real time.
+The st_xatadb_connection package takes care of all the heavy lifting, allowing you to focus on building your application's functionality.
+
+## Getting Started with st_xata_connection
 
 ## 1. Set up your Xata.io and Streamlit Environment
 
@@ -17,7 +25,7 @@ Xata Data Base Connection Streamlit
 
 - Install Streamlit by running `pip install streamlit`.
 
-- Install st_xata_connection by running `pip install st-xata-connection`.** not published yet.
+- Install st_xata_connection by running `pip install st-xatadb-connection`.** not published yet.
 
 ## 2. Configure your Xata Credentials
 
@@ -36,7 +44,7 @@ You could also use the the `st.session_state` object to store the connection obj
 
 ``` python
 import streamlit as st
-from st_xata_connection import XataConnection
+from st_xatadb_connection import XataConnection
 
 xata = st.connection('xata', type=XataConnection)
 ```
