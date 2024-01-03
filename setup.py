@@ -23,7 +23,7 @@ setup(
     license = "MIT",
     keywords=["streamlit", "xata", "connection", "integration", "database"],
     url = "http://packages.python.org/an_example_pypi_project",
-    packages=find_packages(where="src"),
+    packages=find_packages(where="src",include=['st_xatadb_connection'],exclude=['demo']),
     long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=[
