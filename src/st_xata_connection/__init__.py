@@ -503,23 +503,29 @@ class XataConnection(BaseConnection[XataClient]):
             raise XataServerError(response.status_code,response.server_message())
         return response
 
-    def sql_query(self,query:str,**kwargs) -> ApiResponse:
-        """
-        The function executes an SQL query using a client and returns the response.
+    def sql_query(self, query: str, params: Optional[list] = None, consistency: Optional[Literal['strong', 'eventual']] = 'strong', **kwargs) -> ApiResponse:
+            """
+            Executes a SQL query on the Xata database.
 
-        :param query: The `query` parameter is a string that represents the SQL query you want to execute. It can be any
-        valid SQL statement, such as SELECT, INSERT, UPDATE, DELETE, etc
-        :type query: str
+            Args:
+                query (str): The SQL query to execute.
+                params (Optional[list]): Optional parameters to be used in the query.
+                consistency (Optional[Literal['strong', 'eventual']]): The consistency level for the query. Defaults to 'strong'.
+                **kwargs: Additional keyword arguments to be passed to the query.
 
-        :return: an ApiResponse object.
-        """
+            Returns:
+                ApiResponse: The response from the Xata database.
 
-        client = self.__call__(**self.client_kwargs)
-        response = client.sql().query(query,**kwargs)
-        if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            Raises:
+                XataServerError: If the query execution is not successful.
+            """
 
-        return response
+            client = self.__call__(**self.client_kwargs)
+            response = client.sql().query(query, params, consistency=consistency, **kwargs)
+            if not response.is_success():
+                raise XataServerError(response.status_code, response.server_message())
+
+            return response
 
     def askai(self,reference_table:str,question:str, rules: Optional[list]=None, options: Optional[dict]=None,**kwargs)->ApiResponse:
         """
