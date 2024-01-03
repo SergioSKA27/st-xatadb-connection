@@ -317,54 +317,59 @@ class XataConnection(BaseConnection[XataClient]):
 
         return response
 
-    def update(self,table_name:str,record_id:str,record:dict,**kwargs) -> ApiResponse:
-        """
-        The function updates a record in a specified table using the provided record ID and record data.
+    def update(self,table_name:str,record_id:str,
+                    record:dict,if_version:Optional[int]=None,column_names:Optional[list]=None,
+                    **kwargs) -> ApiResponse:
+            """
+            Updates a record in the specified table.
 
-        :param table_name: The name of the table where the record is located
-        :type table_name: str
+            Args:
+                table_name (str): The name of the table.
+                record_id (str): The ID of the record to update.
+                record (dict): The updated record data.
+                if_version (Optional[int]): The version of the record to update (optional).
+                column_names (Optional[list]): The names of the columns to update (optional).
+                **kwargs: Additional keyword arguments to pass to the update method.
 
-        :param record_id: The `record_id` parameter is a string that represents the unique identifier of the record you want
-        to update in the specified table
-        :type record_id: str
+            Returns:
+                ApiResponse: The response from the update operation.
 
-        :param record: The `record` parameter is a dictionary that contains the updated data for the record. It should have
-        key-value pairs where the keys represent the field names in the table and the values represent the updated values
-        for those fields
-        :type record: dict
+            Raises:
+                XataServerError: If the update operation is not successful.
+            """
 
-        :return: an instance of the `ApiResponse` class.
-        """
+            client = self.__call__(**self.client_kwargs)
+            response = client.records().update(f'{table_name}',record_id,record,if_version=if_version,column_names=column_names,**kwargs)
 
-        client = self.__call__(**self.client_kwargs)
-        response = client.records().update(f'{table_name}',record_id,record,**kwargs)
+            if not response.is_success():
+                raise XataServerError(response.status_code,response.server_message())
 
-        if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            return response
 
-        return response
+    def delete(self, table_name: str, record_id: str, columns: Optional[list] = None, **kwargs) -> ApiResponse:
+            """
+            Deletes a record from the specified table.
 
-    def delete(self,table_name:str,record_id:str,**kwargs) -> ApiResponse:
-        """
-        The function deletes a record from a specified table using the provided record ID.
+            Args:
+                table_name (str): The name of the table.
+                record_id (str): The ID of the record to delete.
+                columns (Optional[list]): A list of column names to delete. Defaults to None.
+                **kwargs: Additional keyword arguments to pass to the delete method.
 
-        :param table_name: The name of the table from which you want to delete a record
-        :type table_name: str
+            Returns:
+                ApiResponse: The response from the delete operation.
 
-        :param record_id: The `record_id` parameter is a string that represents the unique identifier of the record that you
-        want to delete from the specified table
-        :type record_id: str
+            Raises:
+                XataServerError: If the delete operation is not successful.
+            """
 
-        :return: an instance of the `ApiResponse` class.
-        """
+            client = self.__call__(**self.client_kwargs)
+            response = client.records().delete(f'{table_name}', record_id, columns=columns, **kwargs)
 
-        client = self.__call__(**self.client_kwargs)
-        response = client.records().delete(f'{table_name}',record_id,**kwargs)
+            if not response.is_success():
+                raise XataServerError(response.status_code, response.server_message())
 
-        if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
-
-        return response
+            return response
 
     def search(self,search_query:dict,**kwargs) -> ApiResponse:
         """
@@ -1015,7 +1020,8 @@ class XataConnection(BaseConnection[XataClient]):
 
     def bulk_processor(self,**kwargs) -> BulkProcessor:
             """
-            Creates a BulkProcessor object with the specified keyword arguments.
+            Additional abstraction for bulk requests that process' requests in parallel
+            :stability beta
 
             Args:
                 **kwargs: Additional keyword arguments to be passed to the BulkProcessor constructor.
