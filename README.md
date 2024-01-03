@@ -25,7 +25,7 @@ The st_xatadb_connection package takes care of all the heavy lifting, allowing y
 
 - Install Streamlit by running `pip install streamlit`.
 
-- Install st_xata_connection by running `pip install st-xatadb-connection`.** not published yet.
+- Install st_xata_connection by running `pip install st-xatadb-connection`.
 
 ## 2. Configure your Xata Credentials
 
