@@ -31,9 +31,26 @@ __all__ = ["XataConnection"]
 
 
 class XataConnection(BaseConnection[XataClient]):
+
     """"
-    XataDBConnection is a class that represents a connection to a Xata database.
-    It is used to connect to a Xata database and perform various operations on the database.
+
+    XataDBConnection Module Documentation
+    =====================================
+
+    The `XataConnection` class represents a connection to a Xata database. It provides methods to connect to the database and perform various operations.
+
+    Usage:
+    ------
+    ```python
+    from xata_db_connection import XataDBConnection
+
+    # Create a connection to the Xata database
+    xata_connection = st.connection('xata', type=XataConnection)
+
+    # Example: Execute a query
+    result = xata_connection.query('example_table)
+    print(result)
+    ```
 
     Xata Docs:
     For more information about Xata, visit
@@ -41,99 +58,6 @@ class XataConnection(BaseConnection[XataClient]):
         - Xata Examples: https://xata.io/docs
 
         - API documentation: https://xata-py.readthedocs.io/en/latest/api.html#
-
-    atributtes:
-        client_kwargs: The `client_kwargs` attribute is a dictionary that contains the keyword arguments that will be
-        passed to the `XataClient` constructor when creating a new instance of the `XataClient` class.
-        :type client_kwargs: dict
-
-        _secrets: The `_secrets` attribute is a dictionary that contains the API key and database URL for the connection.
-        It is used to store the API key and database URL for the connection. It's not recommended to pass the api_key and
-        db_url as kwargs.Use the streamlit secrets or environment variables instead.
-        :type _secrets: dict
-
-        _table_names: The `_table_names` attribute is a list that contains the names of the tables in the database.
-        It is used to store the names of the tables in the database so that they can be retrieved later.And it also
-        allows you to get the schema for all the tables in the database calling the attribute table_name. You can also
-        pass a dictionary with table names as keys and aliases as values to use aliases for the table names.
-
-        :type _table_names: list
-
-    methods:
-        __init__: The above function is a constructor that initializes an object with an optional connection name parameter.
-
-        _call_client: This method is used to create an instance of the XataClient class.
-
-        _connect: Connects to the Xata database using the provided API key and database URL.
-
-        query: Executes a query on the specified table.
-
-        get: The function `get_record` retrieves a record from a specified table using the provided record ID.
-
-        insert: The function inserts a record into a table with an optional record ID.
-
-        upsert: The function replaces a record in a table with a new record using the provided record ID and record data.
-
-        update: The function updates a record in a specified table using the provided record ID and record data.
-
-        delete: The function deletes a record from a specified table using the provided record ID.
-
-        search: The function searches for a specific query in a branch and returns the results.
-
-        search_on_table: The function searches for data in a specified table using a search query and returns the response.
-
-        vector_search: The function performs a vector search on a specified table using a search query and returns the response.
-
-        aggregate: The function aggregates data from a specified table using a given query and returns the response.
-
-        summarize: The function takes a table name and a summarize query to summarize the data in the table, and returns the response.
-
-        transaction: The function performs a transaction using a client and returns the response, raising an exception if the response is not successful.
-
-        sql_query: The function executes an SQL query using a client and returns the response.
-
-        askai: The function `askai` takes in a reference table, a question, optional rules and options, and returns an API response.
-
-        askai_follow_up: The function `askai_follow_up` sends a follow-up question to an AI model using a reference table and a chat session ID.
-
-        bulk_insert: Inserts multiple records into the specified table.
-
-        upload_file: Uploads a file to the specified table, record, and column in the XataDB database.
-
-        append_file_to_array: Appends a file to a specific column in a record of a table.
-
-        get_file: Retrieves a file from the specified table, record, and column in the XataDB database.
-
-        get_file_from_array: Retrieves a file from a specific column in a record of a table.
-
-        delete_file: Deletes a file from the specified table, record, and column in the XataDB database.
-
-        delete_file_from_array: Deletes a file from a specific column in a record of a table.
-
-        image_transform: Transforms an image using the specified transformations.
-
-        next_page: Retrieves the next page of results from the specified table
-
-        prev_page: Retrieves the previous page of results from the specified table.
-
-        get_schema: Retrieves the schema of a table from the Xata database.
-
-        create_table: Creates a new table in the Xata database.
-
-        delete_table: Deletes a table from the Xata database.
-
-        ceate_column: Creates a new column in a table in the Xata database.
-
-        delete_column: Deletes a column from a table in the Xata database.
-
-        get_columns: Retrieves the columns of a table from the Xata database.
-
-        bulk_processor: Creates a new bulk processor for the Xata database.
-
-        bulk_transaction: Creates a new bulk transaction for the Xata database.
-
-        api_request: Creates a new API request for the Xata database.
-
     """
 
     def __init__(self,connection_name:Optional[str]='xata',**kwargs):
