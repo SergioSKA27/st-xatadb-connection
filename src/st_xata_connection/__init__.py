@@ -504,7 +504,7 @@ class XataConnection(BaseConnection[XataClient]):
         return response
 
     def sql_query(self, query: str, params: Optional[list] = None, consistency: Optional[Literal['strong', 'eventual']] = 'strong', **kwargs) -> ApiResponse:
-            """
+        """
             Executes a SQL query on the Xata database.
 
             Args:
@@ -518,39 +518,36 @@ class XataConnection(BaseConnection[XataClient]):
 
             Raises:
                 XataServerError: If the query execution is not successful.
-            """
-
-            client = self.__call__(**self.client_kwargs)
-            response = client.sql().query(query, params, consistency=consistency, **kwargs)
-            if not response.is_success():
-                raise XataServerError(response.status_code, response.server_message())
-
-            return response
-
-    def askai(self,reference_table:str,question:str, rules: Optional[list]=None, options: Optional[dict]=None,**kwargs)->ApiResponse:
-        """
-        The function `askai` takes in a reference table, a question, optional rules and options, and returns an API
-        response.
-
-        :param reference_table: The reference_table parameter is a string that represents the table or dataset that you want
-        to ask the question to. It is used to specify the context or domain in which the question is being asked
-        :type reference_table: str
-
-        :param question: The "question" parameter is a string that represents the question you want to ask the AI
-        :type question: str
-
-        :param rules: The `rules` parameter is an optional list that allows you to specify additional rules or constraints
-        for the question being asked. These rules can be used to filter or manipulate the data before returning the response
-        :type rules: Optional[list]
-
-        :param options: The "options" parameter is a dictionary that allows you to provide additional options for the ask
-        query. These options can include things like the number of results to return, the language to use for the query, and
-        any additional parameters specific to the ask query
-        :type options: Optional[dict]
-
-        :return: an ApiResponse object.
         """
 
+        client = self.__call__(**self.client_kwargs)
+        response = client.sql().query(query, params, consistency=consistency, **kwargs)
+
+        if not response.is_success():
+            raise XataServerError(response.status_code, response.server_message())
+
+        return response
+
+    def askai(self, reference_table: str, question: str,
+              rules: Optional[list] = None, options: Optional[dict] = None,
+              streaming_results: Optional[bool] = False, **kwargs) -> ApiResponse:
+        """
+        Sends a question to the Xata AI service and retrieves the response.
+
+        Args:
+            reference_table (str): The reference table for the question.
+            question (str): The question to ask.
+            rules (Optional[list], optional): List of rules to apply. Defaults to None.
+            options (Optional[dict], optional): Additional options for the question. Defaults to None.
+            streaming_results (Optional[bool], optional): Whether to stream the results. Defaults to False.
+            **kwargs: Additional keyword arguments to pass to the Xata AI service.
+
+        Returns:
+            ApiResponse: The response from the Xata AI service.
+
+        Raises:
+            XataServerError: If the response from the Xata AI service is not successful.
+        """
         client = self.__call__(**self.client_kwargs)
         if rules is None:
             rules = []
@@ -558,39 +555,40 @@ class XataConnection(BaseConnection[XataClient]):
         if options is None:
             options = {}
 
-        response = client.data().ask(reference_table,question,rules=rules,options=options,**kwargs)
+        response = client.data().ask(reference_table, question, rules=rules, options=options,
+                                    streaming_results=streaming_results, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.server_message())
 
         return response
 
-    def askai_follow_up(self,reference_table:str,question:str,chatsessionid: str,**kwargs)->ApiResponse:
+    def askai_follow_up(self, reference_table: str, question: str,
+                            chatsessionid: str, streaming_results: Optional[bool] = False,
+                            **kwargs) -> ApiResponse:
         """
-        The function `askai_follow_up` sends a follow-up question to an AI model using a reference table and a chat session
-        ID.
+            Sends a follow-up question to the AI model and retrieves the response.
 
-        :param reference_table: The reference_table parameter is a string that represents the name or identifier of the
-        table or database where the reference data is stored. This table contains the information that the AI model uses to
-        generate responses
-        :type reference_table: str
+            Args:
+                reference_table (str): The reference table for the AI model.
+                question (str): The question to ask the AI model.
+                chatsessionid (str): The ID of the chat session.
+                streaming_results (bool, optional): Whether to stream the results or not. Defaults to False.
+                **kwargs: Additional keyword arguments to pass to the API.
 
-        :param question: The "question" parameter is a string that represents the follow-up question that you want to ask
-        the AI
-        :type question: str
+            Returns:
+                ApiResponse: The response from the API.
 
-        :param chatsessionid: The `chatsessionid` parameter is a unique identifier for a chat session. It is used to track
-        and identify a specific chat session in the system
-        :type chatsessionid: str
-
-        :return: The function `askai_follow_up` returns an `ApiResponse` object.
-        """
+            Raises:
+                XataServerError: If the API response is not successful.
+            """
 
         client = self.__call__(**self.client_kwargs)
-        response = client.data().ask_follow_up(reference_table,chatsessionid,question,**kwargs)
+        response = client.data().ask_follow_up(reference_table, chatsessionid, question,
+                                                   streaming_results=streaming_results, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.server_message())
 
         return response
 
