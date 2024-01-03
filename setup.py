@@ -1,21 +1,30 @@
-from setuptools import setup
+from setuptools import setup,find_packages
+from pathlib import Path
+
+this_directory = Path(__file__).parent
+long_description = (this_directory / "README.md").read_text()
 
 
-def read():
-    return open('README.md').read()
+def get_version(rel_path):
+    with open(rel_path, "r", encoding="UTF-8") as f:
+        for line in f:
+            if line.startswith("__version__"):
+                delim = '"' if '"' in line else "'"
+                return line.split(delim)[1]
+    raise RuntimeError("Unable to find version string.")
 
 setup(
     name = "st_xata_connection",
-    version = "1.0.0",
+    version = get_version("src/st_xata_connection/__init__.py"),
     author = "Sergio Demis Lopez Martinez",
     author_email = "sergioska81@hotmail.com",
     description = ("Streamlit Xata Data Base Connection"
                                    "An easy way to connect your Streamlit application to your Xata database."),
     license = "MIT",
-    keywords = "streamlit connection xata database",
+    keywords=["streamlit", "xata", "connection", "integration", "database"],
     url = "http://packages.python.org/an_example_pypi_project",
-    packages='st_xata_connection',
-    long_description=read(),
+    packages=find_packages(where="src"),
+    long_description=long_description,
     long_description_content_type="text/markdown",
     classifiers=[
         "Environment :: Plugins",
@@ -30,6 +39,6 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Software Development :: User Interfaces",
     ],
-    install_requires=['streamlit>=1.28','pandas','xata']
+    install_requires=['streamlit>=1.28','pandas','xata'],
 )
 
