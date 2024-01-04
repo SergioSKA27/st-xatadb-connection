@@ -17,7 +17,7 @@ from xata.errors import XataServerError
 #By: Sergio Demis Lopez Martinez
 
 
-__version__ = "1.0.1"
+__version__ = "1.0.3"
 
 __all__ = ["XataConnection"]
 
@@ -195,7 +195,7 @@ class XataConnection(BaseConnection[XataClient]):
         """
         client = self._call_client(**self.client_kwargs)
 
-        if record_id is not None and (create_only is not None or if_version is not None or columns is not None):
+        if record_id is not None or (create_only is not None or if_version is not None or columns is not None):
             if record_id is None:
                 record_id = str(uuid.uuid4())
 
