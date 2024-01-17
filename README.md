@@ -6,7 +6,7 @@ This package provides a seamless bridge between the two tools, making it incredi
 The st_xatadb_connection package takes care of all the heavy lifting, allowing you to focus on building your application's functionality.
 
 📄 **Package documentation**: 
-[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)]([https://<your-custom-subdomain>.streamlit.app](https://st-xatadb-connection-docs.streamlit.app/))
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)]([https://st-xatadb-connection-docs.streamlit.app/](https://st-xatadb-connection-docs.streamlit.app/))
 
 
 🌐 **Learn More: [Xata Docs](https://xata.io/docs)** 
