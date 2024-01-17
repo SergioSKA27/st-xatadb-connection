@@ -5,6 +5,159 @@ To further enhance the synergy between Xata and Streamlit, I've created the st_x
 This package provides a seamless bridge between the two tools, making it incredibly easy to connect your Streamlit application to your Xata database.With just a few lines of code, you can perform CRUD operations (create, retrieve, update, delete) on your Xata data, generate reports and visualizations, and even interact with your data in real time.
 The st_xatadb_connection package takes care of all the heavy lifting, allowing you to focus on building your application's functionality.
 
+📄 **Package documentation**: 
+[![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)]([https://<your-custom-subdomain>.streamlit.app](https://st-xatadb-connection-docs.streamlit.app/))
+
+
+🌐 **Learn More: [Xata Docs](https://xata.io/docs)** 
+
+## **Why Use st-xatadb-connection :thinking:?**
+
+1. 🔄 **Seamless Integration:**
+   - Effortlessly connect and interact with your Xata database using intuitive methods.
+
+2. 🛠️ **Comprehensive Functionality:**
+   - Enjoy a rich set of functions, from basic queries to advanced AI interactions and file handling.
+
+3. 🔒 **Secure Credentials Handling:**
+   - Safely manage your Xata API key and database URL using Streamlit's secrets manager or environment variables.
+
+4. 🚀 **Boosted Productivity:**
+   - Streamline your workflow with efficient data manipulation and advanced search capabilities.
+
+5. 🌐 **Real-time Connectivity:**
+   - Experience real-time interactions with your Xata database, keeping your data up-to-date.
+
+6. 🧠 **AI Integration Made Easy:**
+   - Pose questions to AI models effortlessly and engage in dynamic conversations with askai and askai_follow_up functions.
+
+7. 📄 **File Handling Simplified:**
+   - Manage files seamlessly, including uploads, retrievals, and deletions with dedicated functions.
+
+8. 📈 **Data Aggregation and Summarization:**
+   - Aggregate and summarize data effortlessly, gaining insights at your fingertips.
+
+9. 🌟 **Advanced Schema Management:**
+   - Dynamically create, delete, and modify tables and columns with ease.
+
+10. ⚡️ **Efficient Bulk Operations:**
+    - Leverage bulk processing and transactions for lightning-fast database operations.
+
+11. 🖼️ **Image Transformation Capabilities:**
+    - Transform images on-the-fly with the image_transform function.
+
+12. 🌐 **Pagination for Large Datasets:**
+    - Navigate through large datasets seamlessly with next_page and prev_page functions.
+
+13. 🚀 **Developer-Friendly:**
+    - Designed for developers by developers, ensuring a smooth and intuitive experience.
+
+
+
+## Features
+🔍 **Data Manipulation Made Easy**
+<details>
+<summary>methods</summary>
+
+<ul>
+    <li><strong>query:</strong> Execute queries on specific tables with precision.</li>
+    <li><strong>get:</strong> Retrieve records using record IDs.</li>
+    <li><strong>insert:</strong> Seamlessly insert records into tables.</li>
+    <li><strong>upsert:</strong> Replace records with ease.</li>
+    <li><strong>update:</strong> Effortlessly update records in your tables.</li>
+    <li><strong>delete:</strong> Remove records effortlessly.</li>
+</ul>
+
+</details>
+
+🔎 **Advanced Search Capabilities**
+<details>
+<summary>methods</summary>
+<ul>
+    <li><strong>search:</strong> Discover specific queries in a branch.</li>
+    <li><strong>search_on_table:</strong> Uncover data in a table using a search query.</li>
+    <li><strong>vector_search:</strong> Harness the power of vector searches.</li>
+</ul>
+</details>
+
+📊 **Data Aggregation and Summarization**
+<details>
+<summary>methods</summary>
+<ul>
+    <li><strong>aggregate:</strong> Aggregate data based on queries.</li>
+    <li><strong>summarize:</strong> Summarize data in tables with precision.</li>
+</ul>
+</details>
+
+🔄 **Transaction Management**
+<details>
+<summary>methods</summary>
+<ul>
+    <li><strong>transaction:</strong> Perform transactions effortlessly.</li>
+    <li><strong>sql_query:</strong> Execute SQL queries seamlessly.</li>
+</ul>
+</details>
+
+🧠 **AI Integration**
+<details>
+<summary>methods</summary>
+<ul>
+    <li><strong>askai:</strong> Pose questions and receive AI-driven responses.</li>
+    <li><strong>askai_follow_up:</strong> Engage in dynamic conversations with AI models.</li>
+</ul>
+</details>
+
+📁 **File Handling Made Simple**
+<details>
+<summary>methods</summary>
+<ul>
+    <li><strong>upload_file:</strong> Upload files to specific tables and records.</li>
+    <li><strong>get_file:</strong> Retrieve files with ease.</li>
+    <li><strong>delete_file:</strong> Effortlessly remove files from your database.</li>
+</ul>
+</details>
+
+🖼️ **Image Transformation**
+<details>
+<summary>methods</summary>
+<ul>
+    <li><strong>image_transform:</strong> Transform images effortlessly.</li>
+</ul>
+</details>
+
+📄 **Pagination and Schema Management**
+<details>
+<summary>methods</summary>
+<ul>
+    <li><strong>next_page:</strong> Retrieve the next page of results.</li>
+    <li><strong>prev_page:</strong> Access the previous page of results.</li>
+    <li><strong>get_schema:</strong> Explore table schemas dynamically.</li>
+</ul>
+</details>
+
+🛠️ **Database Administration**
+<details>
+<summary>methods</summary>
+<ul>
+    <li><strong>create_table:</strong> Create new tables effortlessly.</li>
+    <li><strong>delete_table:</strong> Remove tables with precision.</li>
+    <li><strong>create_column:</strong> Add new columns seamlessly.</li>
+    <li><strong>delete_column:</strong> Effortlessly remove columns.</li>
+    <li><strong>get_columns:</strong> Retrieve table columns dynamically.</li>
+</ul>
+</details>
+
+🚀 **Bulk Operations and API Requests**
+<details>
+<summary>methods</summary>
+<ul>
+    <li><strong>bulk_processor:</strong> Facilitate bulk processing effortlessly.</li>
+    <li><strong>bulk_transaction:</strong> Manage bulk transactions seamlessly.</li>
+    <li><strong>api_request:</strong> Create custom API requests with ease.</li>
+</ul>
+</details>
+
+
 ## Getting Started with st_xata_connection
 
 ## 1. Set up your Xata.io and Streamlit Environment
