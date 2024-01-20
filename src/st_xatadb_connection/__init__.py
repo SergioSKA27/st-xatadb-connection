@@ -9,7 +9,6 @@ from streamlit.connections import BaseConnection
 from xata.client import XataClient
 from xata.helpers import BulkProcessor,Transaction
 from xata.api_response import ApiResponse
-from xata.api_request import ApiRequest
 from xata.errors import XataServerError
 
 
@@ -139,7 +138,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.data().query(f'{table_name}', full_query, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -166,7 +165,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.records().get(f'{table_name}', record_id, columns=columns, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -206,7 +205,7 @@ class XataConnection(BaseConnection[XataClient]):
             response = client.records().insert(f'{table_name}', record, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -235,7 +234,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.records().upsert(f'{table_name}', record_id, record, columns=columns, if_version=if_version, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -264,7 +263,7 @@ class XataConnection(BaseConnection[XataClient]):
             response = client.records().update(f'{table_name}',record_id,record,if_version=if_version,columns=columns,**kwargs)
 
             if not response.is_success():
-                raise XataServerError(response.status_code,response.server_message())
+                raise XataServerError(response.status_code, response.error_message())
 
             return response
 
@@ -289,7 +288,7 @@ class XataConnection(BaseConnection[XataClient]):
             response = client.records().delete(f'{table_name}', record_id, columns=columns, **kwargs)
 
             if not response.is_success():
-                raise XataServerError(response.status_code, response.server_message())
+                raise XataServerError(response.status_code, response.error_message())
 
             return response
 
@@ -307,7 +306,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.data().search_branch(search_query,**kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -330,7 +329,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.data().search_table(f'{table_name}',search_query,**kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -353,7 +352,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.data().vector_search(f'{table_name}',search_query,**kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -375,7 +374,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.data().aggregate(f'{table_name}',aggregate_query,**kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -399,7 +398,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.data().summarize(f'{table_name}',summarize_query,**kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
         return response
 
     def transaction(self,payload:Union[List[Dict],Dict],**kwargs) -> ApiResponse:
@@ -422,7 +421,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.records().transaction(payl,**kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
         return response
 
     def sql_query(self, query: str, params: Optional[list] = None, consistency: Optional[Literal['strong', 'eventual']] = 'strong', **kwargs) -> ApiResponse:
@@ -446,7 +445,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.sql().query(query, params, consistency=consistency, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -481,7 +480,7 @@ class XataConnection(BaseConnection[XataClient]):
                                     streaming_results=streaming_results, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -510,7 +509,7 @@ class XataConnection(BaseConnection[XataClient]):
                                                    streaming_results=streaming_results, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -536,7 +535,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.records().bulk_insert(f'{table_name}', {'records': records}, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -565,7 +564,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.files().put(f'{table_name}',record_id,column_name,file_content,content_type,**kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -594,7 +593,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.files().put_item(f'{table_name}',record_id,column_name,file_id,file_content,content_type,**kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -618,7 +617,7 @@ class XataConnection(BaseConnection[XataClient]):
         client = self._call_client(**self.client_kwargs)
         response = client.files().get(f'{table_name}', record_id, column_name, **kwargs)
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -643,7 +642,7 @@ class XataConnection(BaseConnection[XataClient]):
         client = self._call_client(**self.client_kwargs)
         response = client.files().get_item(f'{table_name}', record_id, column_name, file_id, **kwargs)
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -668,7 +667,7 @@ class XataConnection(BaseConnection[XataClient]):
             response = client.files().delete(f'{table_name}', record_id, column_name, **kwargs)
 
             if not response.is_success():
-                raise XataServerError(response.status_code, response.server_message())
+                raise XataServerError(response.status_code, response.error_message())
 
             return response
 
@@ -693,7 +692,7 @@ class XataConnection(BaseConnection[XataClient]):
             client = self._call_client(**self.client_kwargs)
             response = client.files().delete_item(f'{table_name}',record_id,column_name,file_id,**kwargs)
             if not response.is_success():
-                raise XataServerError(response.status_code,response.server_message())
+                raise XataServerError(response.status_code, response.error_message())
 
             return response
 
@@ -750,7 +749,7 @@ class XataConnection(BaseConnection[XataClient]):
             nextpage = client.data().query(f'{table_name}', {'page': _next}, **kwargs)
 
             if not nextpage.is_success():
-                raise XataServerError(nextpage.status_code, nextpage.server_message())
+                raise XataServerError(nextpage.status_code, nextpage.error_message())
         else:
             nextpage = None
 
@@ -797,7 +796,7 @@ class XataConnection(BaseConnection[XataClient]):
             nextpage = client.data().query(f'{table_name}', {'page': _next}, **kwargs)
 
             if not nextpage.is_success():
-                raise XataServerError(nextpage.status_code, nextpage.server_message())
+                raise XataServerError(nextpage.status_code, nextpage.error_message())
         else:
             nextpage = None
 
@@ -821,7 +820,7 @@ class XataConnection(BaseConnection[XataClient]):
             response = client.table().get_schema(table_name, **kwargs)
 
             if not response.is_success():
-                raise XataServerError(response.status_code, response.server_message())
+                raise XataServerError(response.status_code, response.error_message())
 
             return response
 
@@ -845,12 +844,12 @@ class XataConnection(BaseConnection[XataClient]):
             response1 = client.table().create(table_name, **kwargs)
 
             if not response1.is_success():
-                raise XataServerError(response1.status_code, response1.server_message())
+                raise XataServerError(response1.status_code, response1.error_message())
 
             response2 = client.table().set_schema(table_name, schema, **kwargs)
 
             if not response2.is_success():
-                raise XataServerError(response2.status_code, response2.server_message())
+                raise XataServerError(response2.status_code, response2.error_message())
 
             return response1, response2
 
@@ -872,7 +871,7 @@ class XataConnection(BaseConnection[XataClient]):
             response = client.table().delete(table_name, **kwargs)
 
             if not response.is_success():
-                raise XataServerError(response.status_code, response.server_message())
+                raise XataServerError(response.status_code, response.error_message())
 
             return response
 
@@ -896,7 +895,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.table().add_column(table_name, column_config, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -920,7 +919,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.table().delete_column(table_name, column_name, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -943,7 +942,7 @@ class XataConnection(BaseConnection[XataClient]):
         response = client.table().get_columns(table_name, **kwargs)
 
         if not response.is_success():
-            raise XataServerError(response.status_code, response.server_message())
+            raise XataServerError(response.status_code, response.error_message())
 
         return response
 
@@ -972,38 +971,3 @@ class XataConnection(BaseConnection[XataClient]):
                 BulkTransaction: The created BulkTransaction object.
             """
             return Transaction(self._call_client(**self.client_kwargs),**kwargs)
-
-    def api_request(self,method:str,url:str,payload: dict=None,
-                    data: bytes=None,headers: dict=None,
-                    is_streaming: bool=False) -> ApiResponse:
-        """
-        The function `api_request` takes in a method and a url and returns the response from the API.
-
-        :param method: The method parameter is a string that represents the HTTP method to use for the request. It can be
-        one of the following values: GET, POST, PUT, PATCH, DELETE
-        :type method: str
-
-        :param url: The url parameter is a string that represents the URL of the API endpoint
-        :type url: str
-
-        :param payload: The payload parameter is a dictionary that contains the data to be sent with the request
-        :type payload: dict
-
-        :param data: The data parameter is a bytes object that represents the data to be sent with the request
-        :type data: bytes
-
-        :param headers: The headers parameter is a dictionary that contains the headers to be sent with the request
-        :type headers: dict
-
-        :param is_streaming: The is_streaming parameter is a boolean value that indicates whether the request should be
-        :type is_streaming: bool
-
-        :return: an ApiResponse object.
-        """
-        client = self._call_client(**self.client_kwargs)
-        response = ApiRequest(client).request(method,url,headers=headers,payload=payload,data=data,is_streaming=is_streaming)
-
-        if not response.is_success():
-            raise XataServerError(response.status_code,response.server_message())
-
-        return response

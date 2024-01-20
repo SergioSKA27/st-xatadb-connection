@@ -40,6 +40,5 @@ setup(
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Software Development :: User Interfaces",
     ],
-    install_requires=['streamlit>=1.28','xata'],
+    install_requires=['streamlit>=1.28','xata>=1.3'],
 )
-

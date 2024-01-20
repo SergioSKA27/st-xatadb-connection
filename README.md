@@ -153,7 +153,6 @@ The st_xatadb_connection package takes care of all the heavy lifting, allowing y
 <ul>
     <li><strong>bulk_processor:</strong> Facilitate bulk processing effortlessly.</li>
     <li><strong>bulk_transaction:</strong> Manage bulk transactions seamlessly.</li>
-    <li><strong>api_request:</strong> Create custom API requests with ease.</li>
 </ul>
 </details>
 
